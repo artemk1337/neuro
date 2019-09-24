@@ -1,1 +1,1 @@
-# neiro
+# neuro
