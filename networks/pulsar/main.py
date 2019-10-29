@@ -10,6 +10,8 @@ from keras.metrics import Recall, Precision, AUC
 from keras.callbacks import ModelCheckpoint, TerminateOnNaN, ReduceLROnPlateau
 from keras import backend as K
 
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, BaggingRegressor
+
 
 def f1(y_true, y_pred):
     def recall(y_true, y_pred):
@@ -143,4 +145,49 @@ def main():
     ploting()
 
 
-main()
+def rfc():
+    g_perfect = []
+    g_res = 0
+    k_fail = 0
+    for i in range(1, 301):
+        for k in range(1, 501):
+            print(f'i: {i}, k: {k}, g_res: {g_res}')
+            if k_fail >= 50:
+                k_fail = 0
+                break
+            clf = RandomForestClassifier(n_estimators=i, max_depth=k, random_state=0)
+            clf.fit(tr_data, tr_label)
+            tmp = clf.score(va_data, va_label)
+            if tmp > g_res:
+                k_fail = 0
+                g_res = clf.score(va_data, va_label)
+                g_perfect.append(i)
+                g_perfect.append(k)
+            else:
+                k_fail += 1
+    return g_perfect[0], g_perfect[1]
+
+
+def main1():
+    load()
+    i, k = rfc()
+    clf = RandomForestClassifier(n_estimators=i, max_depth=k, random_state=0)
+    clf.fit(tr_data, tr_label)
+    print(clf.score(va_data, va_label))
+    print(clf.predict(te_data[0:20]))
+    print(clf.predict(te_data[80:100]))
+
+
+def main2():
+    load()
+    rf = RandomForestRegressor(n_estimators=10, max_depth=100, random_state=0)
+    clf = BaggingRegressor(rf, n_estimators=60, max_samples=0.1, random_state=25)
+    clf.fit(tr_data, tr_label)
+    print(clf.score(va_data, va_label))
+    print(clf.predict(te_data[0:20]))
+    print(clf.predict(te_data[80:100]))
+
+
+# main()
+main1()
+# main2()
