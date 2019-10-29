@@ -145,13 +145,23 @@ def main():
     ploting()
 
 
+def main1():
+    load()
+    i, k = rfc()
+    clf = RandomForestClassifier(n_estimators=i, max_depth=k, random_state=0)
+    clf.fit(tr_data, tr_label)
+    print(clf.score(va_data, va_label))
+    print(clf.predict(te_data[0:20]))
+    print(clf.predict(te_data[80:100]))
+
+
 def rfc():
     g_perfect = []
     g_res = 0
     k_fail = 0
     for i in range(1, 301):
+        print(f'i: {i}, k: {k}, g_res: {g_res}')
         for k in range(1, 501):
-            print(f'i: {i}, k: {k}, g_res: {g_res}')
             if k_fail >= 50:
                 k_fail = 0
                 break
@@ -166,16 +176,6 @@ def rfc():
             else:
                 k_fail += 1
     return g_perfect[0], g_perfect[1]
-
-
-def main1():
-    load()
-    i, k = rfc()
-    clf = RandomForestClassifier(n_estimators=i, max_depth=k, random_state=0)
-    clf.fit(tr_data, tr_label)
-    print(clf.score(va_data, va_label))
-    print(clf.predict(te_data[0:20]))
-    print(clf.predict(te_data[80:100]))
 
 
 def main2():
