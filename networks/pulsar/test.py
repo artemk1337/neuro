@@ -57,7 +57,7 @@ def roc_auc_score(y_true, y_pred):
 
 
 batch_size = 128
-metr = 'acc'  # f1, AUC
+metr = 'acc'  # f1, roc_auc_score
 metr = roc_auc_score
 
 
