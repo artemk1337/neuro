@@ -5,7 +5,6 @@ __pycache__/
 
 # My projects
 networks/verif_faces/data/
-networks/captcha/samples/
 networks/*.zip
 networks/*/data
 
