@@ -149,9 +149,12 @@ def rfc():
     g_perfect = []
     g_res = 0
     k_fail = 0
+    k = 0
+    g_max = 0
     for i in range(1, 301):
+        print(f'i: {i}, k: {k}, g_res: {g_res}, g_max: {g_max}')
+        g_res = 0
         for k in range(1, 501):
-            print(f'i: {i}, k: {k}, g_res: {g_res}')
             if k_fail >= 50:
                 k_fail = 0
                 break
@@ -161,8 +164,10 @@ def rfc():
             if tmp > g_res:
                 k_fail = 0
                 g_res = clf.score(va_data, va_label)
-                g_perfect.append(i)
-                g_perfect.append(k)
+                if g_res > g_max:
+                    g_max = g_res
+                    g_perfect.append(i)
+                    g_perfect.append(k)
             else:
                 k_fail += 1
     return g_perfect[0], g_perfect[1]
@@ -180,8 +185,10 @@ def main1():
 
 def main2():
     load()
+    """<=====Need_to_fix=====>"""
     rf = RandomForestRegressor(n_estimators=10, max_depth=100, random_state=0)
     clf = BaggingRegressor(rf, n_estimators=60, max_samples=0.1, random_state=25)
+    """<=====================>"""
     clf.fit(tr_data, tr_label)
     print(clf.score(va_data, va_label))
     print(clf.predict(te_data[0:20]))
