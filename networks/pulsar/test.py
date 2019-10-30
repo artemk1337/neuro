@@ -159,8 +159,11 @@ def rfc():
     g_perfect = []
     g_res = 0
     k_fail = 0
+    k = 0
+    g_max = 0
     for i in range(1, 301):
-        print(f'i: {i}, k: {k}, g_res: {g_res}')
+        print(f'i: {i}, k: {k}, g_res: {g_res}, g_max: {g_max}')
+        g_res = 0
         for k in range(1, 501):
             if k_fail >= 50:
                 k_fail = 0
@@ -171,8 +174,10 @@ def rfc():
             if tmp > g_res:
                 k_fail = 0
                 g_res = clf.score(va_data, va_label)
-                g_perfect.append(i)
-                g_perfect.append(k)
+                if g_res > g_max:
+                    g_max = g_res
+                    g_perfect.append(i)
+                    g_perfect.append(k)
             else:
                 k_fail += 1
     return g_perfect[0], g_perfect[1]
