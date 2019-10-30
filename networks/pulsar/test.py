@@ -145,16 +145,6 @@ def main():
     ploting()
 
 
-def main1():
-    load()
-    i, k = rfc()
-    clf = RandomForestClassifier(n_estimators=i, max_depth=k, random_state=0)
-    clf.fit(tr_data, tr_label)
-    print(clf.score(va_data, va_label))
-    print(clf.predict(te_data[0:20]))
-    print(clf.predict(te_data[80:100]))
-
-
 def rfc():
     g_perfect = []
     g_res = 0
@@ -183,10 +173,22 @@ def rfc():
     return g_perfect[0], g_perfect[1]
 
 
+def main1():
+    load()
+    i, k = rfc()
+    clf = RandomForestClassifier(n_estimators=i, max_depth=k, random_state=0)
+    clf.fit(tr_data, tr_label)
+    print(clf.score(va_data, va_label))
+    print(clf.predict(te_data[0:20]))
+    print(clf.predict(te_data[80:100]))
+
+
 def main2():
     load()
+    """<=====Need_to_fix=====>"""
     rf = RandomForestRegressor(n_estimators=10, max_depth=100, random_state=0)
     clf = BaggingRegressor(rf, n_estimators=60, max_samples=0.1, random_state=25)
+    """<=====================>"""
     clf.fit(tr_data, tr_label)
     print(clf.score(va_data, va_label))
     print(clf.predict(te_data[0:20]))
