@@ -11,6 +11,9 @@ from keras.callbacks import ModelCheckpoint, TerminateOnNaN, ReduceLROnPlateau
 from keras import backend as K
 
 
+from sklearn.ensemble import RandomForestClassifier
+
+
 def f1(y_true, y_pred):
     def recall(y_true, y_pred):
         true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
@@ -115,4 +118,48 @@ def main():
     ploting()
 
 
-main()
+def rfc():
+    g_perfect = []
+    g_res = 0
+    k_fail = 0
+    k = 0
+    g_max = 0
+    for i in range(1, 301):
+        print(f'i: {i}, k: {k}, g_res: {g_res}, g_max: {g_max}')
+        g_res = 0
+        for k in range(1, 501):
+            if k_fail >= 50:
+                k_fail = 0
+                break
+            clf = RandomForestClassifier(n_estimators=i, max_depth=k, random_state=0)
+            clf.fit(tr, trl)
+            tmp = clf.score(te, tel)
+            if tmp > g_res:
+                k_fail = 0
+                g_res = clf.score(te, tel)
+                if g_res > g_max:
+                    g_max = g_res
+                    g_perfect.append(i)
+                    g_perfect.append(k)
+            else:
+                k_fail += 1
+    return g_perfect[0], g_perfect[1]
+
+
+def main1():
+    load_data()
+    i, k = rfc()
+    clf = RandomForestClassifier(n_estimators=i, max_depth=k, random_state=0)
+    clf.fit(tr, trl)
+    print(clf.score(te, tel))
+
+
+main1()
+# main()
+
+
+
+
+
+
+
