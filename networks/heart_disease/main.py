@@ -10,7 +10,7 @@ from keras.metrics import Precision, Recall, AUC
 from keras.callbacks import ModelCheckpoint, TerminateOnNaN, ReduceLROnPlateau
 from keras import backend as K
 
-
+import json
 from sklearn.ensemble import RandomForestClassifier
 
 
@@ -118,29 +118,71 @@ def main():
     ploting()
 
 
-def rfc():
-    g_perfect = []
-    g_res = 0
+def rfc1():
+    g_perfect = [1, 1]
     k_fail = 0
+    i_fail = 0
     k = 0
     g_max = 0
+    g_max_te = 0
     for i in range(1, 301):
-        print(f'i: {i}, k: {k}, g_res: {g_res}, g_max: {g_max}')
-        g_res = 0
+        with open('max_res.json', 'w') as file:
+            json.dump({"i": g_perfect[0], "k": g_perfect[1], "g_max": g_max, "g_max_te": g_max_te}, file)
+        print(f'i: {i}, k: {k},\n'
+              f'g_max: {g_max}, g_max_te: {g_max_te}')
+        if i_fail >= 30:
+            break
         for k in range(1, 501):
-            if k_fail >= 50:
+            if k_fail >= 30:
                 k_fail = 0
+                # i_fail += 1
+                k += 30
+            clf = RandomForestClassifier(n_estimators=i, max_depth=k, random_state=0)
+            clf.fit(tr, trl)
+            tmp = clf.score(tr, trl)
+            tmp1 = clf.score(te, tel)
+            if tmp1 > g_max_te and tmp >= tmp1:
+                g_max = tmp
+                g_max_te = tmp1
+                i_fail = 0
+                g_perfect[0] = i
+                g_perfect[1] = k
+            else:
+                k_fail += 1
+    return g_perfect[0], g_perfect[1]
+
+
+def rfc2():
+    g_perfect = [1, 1]
+    g_res_te = 0
+    k_fail = 0
+    i_fail = 0
+    k = 0
+    g_max_te = 0
+    for i in range(1, 301):
+        print(f'i: {i}, k: {k},\n'
+              f'g_res_te: {g_res_te}, g_max_te: {g_max_te}')
+        print(RandomForestClassifier(n_estimators=g_perfect[0], max_depth=g_perfect[1], random_state=0).fit(tr, trl).
+              score(te, tel))
+        if i_fail >= 30:
+            break
+        g_max_te = 0
+        for k in range(1, 501):
+            if k_fail >= 100:
+                k_fail = 0
+                i_fail += 1
                 break
             clf = RandomForestClassifier(n_estimators=i, max_depth=k, random_state=0)
             clf.fit(tr, trl)
-            tmp = clf.score(te, tel)
-            if tmp > g_res:
+            tmp1 = clf.score(te, tel)
+            if tmp1 > g_res_te:
                 k_fail = 0
-                g_res = clf.score(te, tel)
-                if g_res > g_max:
-                    g_max = g_res
-                    g_perfect.append(i)
-                    g_perfect.append(k)
+                g_res_te = clf.score(te, tel)
+                if g_res_te > g_max_te:
+                    g_max_te = g_res_te
+                    i_fail = 0
+                    g_perfect[0] = i
+                    g_perfect[1] = k
             else:
                 k_fail += 1
     return g_perfect[0], g_perfect[1]
@@ -148,7 +190,7 @@ def rfc():
 
 def main1():
     load_data()
-    i, k = rfc()
+    i, k = rfc1()
     clf = RandomForestClassifier(n_estimators=i, max_depth=k, random_state=0)
     clf.fit(tr, trl)
     print(clf.score(te, tel))

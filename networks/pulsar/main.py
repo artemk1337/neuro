@@ -215,15 +215,16 @@ def main1():
 def main2():
     load()
     """<=====Need_to_fix=====>"""
-    rf = RandomForestRegressor(n_estimators=10, max_depth=100, random_state=0)
-    clf = BaggingRegressor(rf, n_estimators=60, max_samples=0.1, random_state=25)
+    rf = RandomForestRegressor(n_estimators=20, max_depth=10, random_state=0)
+    clf = BaggingRegressor(rf, n_estimators=30, max_samples=0.1, random_state=25)
     """<=====================>"""
-    clf.fit(tr_data, tr_label)
+    hist = clf.fit(tr_data, tr_label)
+    print(hist)
     print(clf.score(va_data, va_label))
     print(clf.predict(te_data[0:20]))
     print(clf.predict(te_data[80:100]))
 
 
-main()
+# main()
 # main1()
-# main2()
+main2()

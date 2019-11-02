@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 from keras.callbacks import ModelCheckpoint, TerminateOnNaN, ReduceLROnPlateau
 from keras import backend as K
 
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, BaggingRegressor
+
 
 def f1(y_true, y_pred):  # F-metric (with Recall and Precision)
     def recall(y_true, y_pred):
@@ -122,8 +124,50 @@ def check_model(model, xtr, ytr, xts, yts):
     print(f'Prediction: {model.evaluate(xts, yts)}')
 
 
-m = model()
-check_model(m, mat_texts_tr, y_train, mat_texts_tst, y_test)
+def main():
+    m = model()
+    check_model(m, mat_texts_tr, y_train, mat_texts_tst, y_test)
+    ploting()
 
-# print(m.predict(mat_texts_tr[0:10]), y_train[0:10])
-ploting()
+
+def rfc(tr_data, tr_label, va_data, va_label):
+    g_perfect = []
+    g_res = 0
+    k_fail = 0
+    k = 0
+    g_max = 0
+    for i in range(1, 301):
+        print(f'i: {i}, k: {k}, g_res: {g_res}, g_max: {g_max}')
+        g_res = 0
+        for k in range(1, 501):
+            if k_fail >= 50:
+                k_fail = 0
+                break
+            clf = RandomForestClassifier(n_estimators=i, max_depth=k, random_state=0)
+            clf.fit(tr_data, tr_label)
+            tmp = clf.score(va_data, va_label)
+            if tmp > g_res:
+                k_fail = 0
+                g_res = clf.score(va_data, va_label)
+                if g_res > g_max:
+                    g_max = g_res
+                    g_perfect.append(i)
+                    g_perfect.append(k)
+            else:
+                k_fail += 1
+    return g_perfect[0], g_perfect[1]
+
+
+def main1():
+    tr_data, tr_label, va_data, va_label = mat_texts_tr, y_train, mat_texts_tst, y_test
+    i, k = rfc(mat_texts_tr, y_train, mat_texts_tst, y_test)
+    clf = RandomForestClassifier(n_estimators=i, max_depth=k, random_state=0)
+    clf.fit(tr_data, tr_label)
+    print(clf.score(va_data, va_label))
+    # print(clf.predict(te_data[0:20]))
+    # print(clf.predict(te_data[80:100]))
+
+
+main()
+main1()
+
