@@ -9,7 +9,7 @@ import time as tm
 import keras
 from keras.optimizers import RMSprop
 from keras.models import Model, Sequential
-from keras.layers import Conv2D, Dropout, Dense, Flatten, MaxPool2D, Input, Lambda, InputLayer, concatenate
+from keras.layers import Conv2D, Dropout, Dense, Flatten, MaxPool2D, Input, concatenate, BatchNormalization, Activation
 from keras.applications.mobilenet_v2 import MobileNetV2
 from keras.utils import to_categorical
 from keras import backend as K
@@ -63,7 +63,7 @@ def dataset():
 
 samples, inf = dataset()
 
-a = int(len(samples) * 0.75)
+a = int(len(samples) * 0.8)
 tr, trl = samples[:a], inf[:a, 1:3]
 te, tel = samples[a:], inf[a:, 1:3]
 del samples, inf
@@ -71,27 +71,46 @@ print(tr.shape, te.shape, trl.shape, tel.shape)
 
 
 epochs = 10
-batch_size = 32
+batch_size = 128
 
-print(tr.shape)
+
+def relu6(x):
+    return K.relu(x, max_value=6.0)
+
+
 input = Input(shape=(int(size * 1.35), size, 1), name='bones')
 gender = Input(shape=(1,))
-x = Conv2D(64, (5, 5), activation='relu')(input)
+# conv_base = MobileNetV2(weights='imagenet', include_top=False, input_shape=(int(size * 1.35), size, 3))(input)
+x = Conv2D(16, (5, 5))(input)
+x = Activation(relu6)(x)
+x = BatchNormalization()(x)
+x = Activation(relu6)(x)
 x = MaxPool2D((2, 2))(x)
-x = Conv2D(128, (5, 5), activation='relu')(x)
+x = Conv2D(32, (5, 5))(x)
+x = Activation(relu6)(x)
+x = BatchNormalization()(x)
+x = Activation(relu6)(x)
 x = MaxPool2D((2, 2))(x)
-x = Conv2D(128, (5, 5), activation='relu')(x)
+x = Conv2D(64, (5, 5))(x)
+x = Activation(relu6)(x)
+x = BatchNormalization()(x)
+x = Activation(relu6)(x)
 x = MaxPool2D((2, 2))(x)
-x = Conv2D(256, (5, 5), activation='relu')(x)
+x = Conv2D(128, (5, 5))(x)
+x = Activation(relu6)(x)
+x = BatchNormalization()(x)
+x = Activation(relu6)(x)
 x = MaxPool2D((2, 2))(x)
-x = Conv2D(512, (5, 5), activation='relu')(x)
+x = Conv2D(128, (5, 5))(x)
+x = Activation(relu6)(x)
+x = BatchNormalization()(x)
+x = Activation(relu6)(x)
 x = MaxPool2D((2, 2))(x)
 x = Flatten()(x)
-x = Dense(2048, activation='relu')(x)
-x = Dense(1024, activation='relu')(x)
-x = Dense(256, activation='relu')(x)
-x = Dense(32, activation='softmax')(x)
+x = Dense(512, activation='relu')(x)
+x = Dense(32, activation='relu')(x)
 x = concatenate([x, gender])
+x = Dense(8, activation='relu')(x)
 age = Dense(1, activation='relu', name='age')(x)
 
 model = Model([input, gender], age)
