@@ -132,7 +132,6 @@ def take_labels(tr, te):
     del tr
     te_data, te_label = te[:, 1:15], te[:, 15:16]
     del te
-    print(tr_data)
     return tr_data, tr_label, te_data, te_label
 
 
@@ -145,7 +144,7 @@ def create_model(len_):
     return m
 
 
-def training(tr_data, tr_label, te_data, te_label, m):
+def training_neuro(tr_data, tr_label, te_data, te_label, m):
     global history
     batch_size = 1024
     epochs = 10
@@ -199,11 +198,18 @@ def ploting():
     plt.show()
 
 
+def forests(tr_data, tr_label, te_data, te_label):
+    clf = RandomForestClassifier(n_estimators=10, max_depth=10, random_state=0)
+    clf.fit(tr_data, tr_label)
+    print(clf.score(te_data, te_label))
+
+
 def main():
     tr, te = load()
     tr_data, tr_label, te_data, te_label = take_labels(tr, te)
-    training(tr_data, tr_label, te_data, te_label, create_model(tr_data.shape[1]))
-    ploting()
+    # training_neuro(tr_data, tr_label, te_data, te_label, create_model(tr_data.shape[1]))
+    # ploting()
+    forests(tr_data, tr_label, te_data, te_label)
 
 
 main()
