@@ -1,5 +1,28 @@
 {
     "/matches/2337462/100-thieves-vs-astralis-iem-beijing-2019": {
-        "date": 1573371000
+        "date": 1573420200,
+        "rank_1": "136",
+        "rank_2": "175",
+        "team_1": "Keyd",
+        "team_2": "Redemption POA",
+        "score_1": "2",
+        "score_2": "1",
+        "maps": [
+            [
+                "Inferno",
+                "16",
+                "9"
+            ],
+            [
+                "Train",
+                "7",
+                "16"
+            ],
+            [
+                "Vertigo",
+                "16",
+                "8"
+            ]
+        ]
     }
 }
