@@ -66,11 +66,11 @@ def load_data():
     # print(a['0'])
     for i in a:
         tmp = []
-        if a[i]['res'] >= 0.5:
+        """if a[i]['res'] >= 0.5:
             tmp.append(1)
         else:
-            tmp.append(0)
-        # tmp.append(a[i]['res'])
+            tmp.append(0)"""
+        tmp.append(a[i]['res'])
         tmp.append(a[i]['rank_1'])
         tmp.append(a[i]['rank_2'])
         for k in a[i]['score_1']:
@@ -231,6 +231,6 @@ def main1():
 
 
 """Neuro"""
-# main()
+main()
 """Random forest"""
-main1()
+# main1()
