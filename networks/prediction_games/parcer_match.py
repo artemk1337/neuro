@@ -3,6 +3,7 @@ import requests
 import numpy as np
 import json
 import keras
+import _pickle as cPickle
 
 
 def get_players(s1, s2):
@@ -131,7 +132,6 @@ def transform(a):
     table.append(tmp)
     del tmp
     table = np.asarray(table).astype(np.float)
-    print(table.shape)
     return table
 
 
@@ -139,10 +139,15 @@ def main(s):
     a = parse(s)
     a = transform(a)
     m = keras.models.load_model('model')
-    print(m.predict(a[:]))
+    with open('rf.pkl', 'rb') as f:
+        clf = cPickle.load(f)
+    print([f'{clf.predict(a[:])[0] * 100}%', f'{m.predict(a[:])[0, 0] * 100}%'])
     pass
 
 
+main('https://www.hltv.org/matches/2337779/spirit-vs-forze-esea-mdl-season-32-europe')
+main('https://www.hltv.org/matches/2337785/hellraisers-vs-m1x-qi-banja-luka-2019-europe-qualifier')
+main('https://www.hltv.org/matches/2337780/cr4zy-vs-pro100-esea-mdl-season-32-europe')
 main('https://www.hltv.org/matches/2337781/havu-vs-avangar-esea-mdl-season-32-europe')
 
 

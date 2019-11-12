@@ -15,6 +15,7 @@ from sklearn.metrics import roc_auc_score
 import tensorflow as tf
 
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, BaggingRegressor
+import _pickle as cPickle
 
 
 def f1(y_true, y_pred):
@@ -112,21 +113,28 @@ def create_model():
     return seq
 
 
-metr = 'acc'
+metr = 'mae'
+# loss = 'binary_crossentropy'
+loss = 'mse'
+optimizer = 'adam'
 batch_size = 10000
 epochs = 500
 
 
 def train(tr_x, tr_y, te_x, te_y, seq):
     global history
-    seq.compile(loss='binary_crossentropy', optimizer='adam', metrics=[metr])
+    seq.compile(loss=loss, optimizer=optimizer, metrics=[metr])
     checkpoint = ModelCheckpoint('weights.hdf5',
-                                 monitor='val_acc',
+                                 monitor=f'val_{metr}',
                                  verbose=1,
                                  save_best_only=True)
     history = seq.fit(tr_x[:], tr_y[:], batch_size=batch_size,
                       epochs=epochs, verbose=2,
-                      callbacks=[checkpoint, TerminateOnNaN()],
+                      callbacks=[checkpoint,
+                                 TerminateOnNaN(),
+                                 ReduceLROnPlateau(monitor='val_loss',
+                                                   factor=0.5,
+                                                   patience=100)],
                       validation_data=(te_x[:], te_y[:]),
                       shuffle=True)
     # seq.load_weights(f'weights.hdf5')
@@ -183,8 +191,9 @@ def rfc1(a, b, c, d):
             json.dump({"i": g_perfect[0], "k": g_perfect[1], "g_max": g_max, "g_max_te": g_max_te}, file)
         print(f'i: {i}, k: {k},\n'
               f'g_max: {g_max}, g_max_te: {g_max_te}')
-        if i_fail >= 30:
+        if i_fail >= 60:
             break
+        prev_good_te = 0
         for k in range(1, 501):
             if k_fail >= 30:
                 k_fail = 0
@@ -195,14 +204,21 @@ def rfc1(a, b, c, d):
             clf.fit(a, b)
             tmp = clf.score(a, b)
             tmp1 = clf.score(c, d)
-            if tmp1 > g_max_te and tmp >= tmp1:
+            if tmp1 > prev_good_te:
+                k_fail = 0
+                prev_good_te = tmp1
+            if g_max_te < tmp1 <= tmp:
                 g_max = tmp
                 g_max_te = tmp1
                 i_fail = 0
+                k_fail = 0
                 g_perfect[0] = i
                 g_perfect[1] = k
+                with open('rf.pkl', 'wb') as f:
+                    cPickle.dump(clf, f)
             else:
                 k_fail += 1
+        i_fail += 1
     return g_perfect[0], g_perfect[1]
 
 
@@ -214,5 +230,7 @@ def main1():
     print(clf.score(c, d))
 
 
-main()
+"""Neuro"""
+# main()
+"""Random forest"""
 main1()
