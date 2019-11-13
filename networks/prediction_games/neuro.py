@@ -59,40 +59,41 @@ def roc_auc_score(y_true, y_pred):
     return tf.reduce_sum(tf.pow(-masked, p))
 
 
-def load_data():
-    with open('match_train.json', 'r', encoding='utf-8') as file:
-        a = json.load(file)
+def load_data_1():
     table = []
-    # print(a['0'])
-    for i in a:
-        tmp = []
-        """if a[i]['res'] >= 0.5:
-            tmp.append(1)
-        else:
-            tmp.append(0)"""
-        tmp.append(a[i]['res'])
-        tmp.append(a[i]['rank_1'])
-        tmp.append(a[i]['rank_2'])
-        for k in a[i]['score_1']:
-            for t in k:
-                tmp.append(k[t])
-        for k in a[i]['ranks_1']:
-            for t in k:
-                tmp.append(k[t])
-        for k in a[i]['score_2']:
-            for t in k:
-                tmp.append(k[t])
-        for k in a[i]['ranks_2']:
-            for t in k:
-                tmp.append(k[t])
-        for k in a[i]['player_stat_1']:
-            for t in k:
-                tmp.append(k[t])
-        for k in a[i]['player_stat_2']:
-            for t in k:
-                tmp.append(k[t])
-        table.append(tmp)
-        del tmp
+    for i in range(8):
+        with open(f'data/match_train_{i}.json', 'r', encoding='utf-8') as file:
+            a = json.load(file)
+        # print(a['0'])
+        for i in a:
+            tmp = []
+            if a[i]['res'] >= 0.5:
+                tmp.append(1)
+            else:
+                tmp.append(0)
+            # tmp.append(a[i]['res'])
+            tmp.append(a[i]['rank_1'])
+            tmp.append(a[i]['rank_2'])
+            for k in a[i]['score_1']:
+                for t in k:
+                    tmp.append(k[t])
+            for k in a[i]['ranks_1']:
+                for t in k:
+                    tmp.append(k[t])
+            for k in a[i]['score_2']:
+                for t in k:
+                    tmp.append(k[t])
+            for k in a[i]['ranks_2']:
+                for t in k:
+                    tmp.append(k[t])
+            for k in a[i]['player_stat_1']:
+                for t in k:
+                    tmp.append(k[t])
+            for k in a[i]['player_stat_2']:
+                for t in k:
+                    tmp.append(k[t])
+            table.append(tmp)
+            del tmp
     table = np.asarray(table).astype(np.float)
     np.random.shuffle(table)
     a = int(table.shape[0] * 0.8)
@@ -108,17 +109,17 @@ def load_data():
 def create_model():
     seq = Sequential()
     seq.add(Dense(1024, input_dim=32, activation='relu'))
+    seq.add(Dropout(0.2))
     seq.add(Dense(512, activation='relu'))
     seq.add(Dense(1, activation='sigmoid'))
     return seq
 
 
-metr = 'mae'
-# loss = 'binary_crossentropy'
-loss = 'mse'
+metr = 'acc'
+loss = 'binary_crossentropy'
 optimizer = 'adam'
-batch_size = 10000
-epochs = 500
+batch_size = 128
+epochs = 300
 
 
 def train(tr_x, tr_y, te_x, te_y, seq):
@@ -133,8 +134,8 @@ def train(tr_x, tr_y, te_x, te_y, seq):
                       callbacks=[checkpoint,
                                  TerminateOnNaN(),
                                  ReduceLROnPlateau(monitor='val_loss',
-                                                   factor=0.5,
-                                                   patience=100)],
+                                                   factor=0.7,
+                                                   patience=20)],
                       validation_data=(te_x[:], te_y[:]),
                       shuffle=True)
     # seq.load_weights(f'weights.hdf5')
@@ -173,13 +174,13 @@ def ploting():
 
 
 def main():
-    a, b, c, d = load_data()
+    a, b, c, d = load_data_1()
     m = create_model()
     train(a, b, c, d, m)
     ploting()
 
 
-def rfc1(a, b, c, d):
+def rfc1(a, b, c, d, s):
     g_perfect = [1, 1]
     k_fail = 0
     i_fail = 0
@@ -191,7 +192,7 @@ def rfc1(a, b, c, d):
             json.dump({"i": g_perfect[0], "k": g_perfect[1], "g_max": g_max, "g_max_te": g_max_te}, file)
         print(f'i: {i}, k: {k},\n'
               f'g_max: {g_max}, g_max_te: {g_max_te}')
-        if i_fail >= 60:
+        if i_fail >= 30:
             break
         prev_good_te = 0
         for k in range(1, 501):
@@ -214,7 +215,7 @@ def rfc1(a, b, c, d):
                 k_fail = 0
                 g_perfect[0] = i
                 g_perfect[1] = k
-                with open('rf.pkl', 'wb') as f:
+                with open(s, 'wb') as f:
                     cPickle.dump(clf, f)
             else:
                 k_fail += 1
@@ -222,15 +223,15 @@ def rfc1(a, b, c, d):
     return g_perfect[0], g_perfect[1]
 
 
-def main1():
-    a, b, c, d = load_data()
-    i, k = rfc1(a, b, c, d)
-    clf = RandomForestClassifier(n_estimators=i, max_depth=k, random_state=0)
-    clf.fit(a, b)
-    print(clf.score(c, d))
+def main1(s):
+    a, b, c, d = load_data_1()
+    i, k = rfc1(a, b, c, d, s)
 
 
 """Neuro"""
 main()
 """Random forest"""
-# main1()
+main1('rf.pkl')
+main1('rf1.pkl')
+main1('rf2.pkl')
+main1('rf3.pkl')

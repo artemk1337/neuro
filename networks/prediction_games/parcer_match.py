@@ -18,7 +18,7 @@ def get_players(s1, s2):
         page = requests.get(f'https://www.hltv.org{i}')
         stat.append(BeautifulSoup(page.text, "html.parser").findAll('span', class_='statsVal')[0].text)
     players = []
-    page = requests.get(s1)
+    page = requests.get(s2)
     for i in BeautifulSoup(page.text, "html.parser").findAll('div', class_='bodyshot-team g-grid')[0].findAll('a'):
         players.append(i.get('href'))
     names = []
@@ -40,6 +40,7 @@ def train_data(s, table):
     link1 = f'https://www.hltv.org{tmp1}'
     link2 = f'https://www.hltv.org{tmp2}'
     players_stat = get_players(link1, link2)
+
     rank = [[], []]
     try:
         rank_1 = BeautifulSoup(requests.get(link1).text, "html.parser").findAll(
@@ -139,15 +140,22 @@ def main(s):
     a = parse(s)
     a = transform(a)
     m = keras.models.load_model('model')
-    with open('rf.pkl', 'rb') as f:
-        clf = cPickle.load(f)
-    print([f'{clf.predict(a[:])[0] * 100}%', f'{int(m.predict(a[:])[0, 0] * 100)}%'])
-    pass
+    clf = cPickle.load(open('rf.pkl', 'rb'))
+    clf1 = cPickle.load(open('rf1.pkl', 'rb'))
+    clf2 = cPickle.load(open('rf2.pkl', 'rb'))
+    clf3 = cPickle.load(open('rf3.pkl', 'rb'))
+    print([f'{int(clf.predict(a[:])[0] * 100)}%',
+           f'{int(clf1.predict(a[:])[0] * 100)}%',
+           f'{int(clf2.predict(a[:])[0] * 100)}%',
+           f'{int(clf3.predict(a[:])[0] * 100)}%',
+           f'{int(m.predict(a[:])[0, 0] * 100)}%'])
+    res = (clf.predict(a[:])[0] +
+              clf1.predict(a[:])[0] +
+              clf2.predict(a[:])[0] +
+              clf3.predict(a[:])[0] +
+              m.predict(a[:])[0, 0]) / 5
+    print(res)
 
 
-main('https://www.hltv.org/matches/2337779/spirit-vs-forze-esea-mdl-season-32-europe')
-main('https://www.hltv.org/matches/2337785/hellraisers-vs-m1x-qi-banja-luka-2019-europe-qualifier')
-main('https://www.hltv.org/matches/2337780/cr4zy-vs-pro100-esea-mdl-season-32-europe')
-main('https://www.hltv.org/matches/2337781/havu-vs-avangar-esea-mdl-season-32-europe')
-main('https://www.hltv.org/matches/2337761/gambit-youngsters-vs-winstrike-qi-banja-luka-2019-europe-qualifier')
+main('https://www.hltv.org/matches/2337715/forze-vs-giants-united-masters-league-season-2')
 

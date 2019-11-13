@@ -3,37 +3,7 @@ import requests
 import re
 import numpy as np
 import json
-
-
-def parse(url, matches_links):
-    page = requests.get(url)
-    # Success - 200
-    if page.status_code != 200:
-        exit(-1)
-    soup = BeautifulSoup(page.text, "html.parser")
-    # print(soup)
-    new = []
-    for i in soup.findAll('a', class_='a-reset'):
-        new.append(i.get('href'))
-    for i in new:
-        if re.search(r'\bmatches\b', i):
-            matches_links.append(i)
-    del new
-
-
-def choose_links():
-    matches_links = []
-    # Первая страница
-    parse('https://www.hltv.org/results', matches_links)
-    # Остальные страницы
-    for i in range(1, 30):  # max - 4930
-        # print(i)
-        parse(f'https://www.hltv.org/results?offset={i * 100}', matches_links)
-    # Сохранение
-    print(f'Матчей - {len(matches_links)}')
-    with open('matches_links.json', 'w') as file:
-        json.dump(matches_links, file)
-    return matches_links
+from threading import Thread
 
 
 def get_info(m_links):
@@ -126,7 +96,7 @@ def get_info(m_links):
         get_all_and_save(m_links[i])
 
 
-def stats_train(m_links):
+def stats_train(filename, a):
     def get_players(s):
         players = []
         page = requests.get(s)
@@ -211,22 +181,61 @@ def stats_train(m_links):
                                 'player_stat_1': [{f'{i}': players_stat[i] for i in range(5)}],
                                 'player_stat_2': [{f'{i - 5}': players_stat[i] for i in range(5, 10)}],
                                 }
-        with open('match_train.json', 'w') as file:
+        with open(f'data/match_train_{a}.json', 'w') as file:
             json.dump(table, file, indent=4, separators=(',', ': '))
 
+    with open(filename) as file:
+        m_links = json.load(file)
     table = {}
-    for i in range(len(m_links)):
-        print(f'Матч №{i}')
-        page = requests.get(f'https://www.hltv.org{m_links[i]}')
+    for abc in range(len(m_links)):
+        print(f'Матч №{abc}, поток - {a}')
+        page = requests.get(f'https://www.hltv.org{m_links[abc]}')
         if page.status_code != 200:
             exit(-1)
         try:
-            train_data(f'https://www.hltv.org{m_links[i]}', i, table)
+            train_data(f'https://www.hltv.org{m_links[abc]}', abc, table)
         except:
             pass
 
 
-m_links = choose_links()
+def parse(url):
+    matches_links = []
+    page = requests.get(url)
+    # Success - 200
+    if page.status_code != 200:
+        exit(-1)
+    soup = BeautifulSoup(page.text, "html.parser")
+    # print(soup)
+    new = []
+    for i in soup.findAll('a', class_='a-reset'):
+        new.append(i.get('href'))
+    for i in new:
+        if re.search(r'\bmatches\b', i):
+            matches_links.append(i)
+    del new
+    return matches_links
+
+
+def parse_links():
+    # Первая страница
+    matches_links = parse('https://www.hltv.org/results')
+    with open('data/matches_links_0.json', 'w') as file:
+        json.dump(matches_links, file)
+    # Остальные страницы
+    for i in range(1, 100):  # max - 4930
+        # print(i)
+        matches_links = parse(f'https://www.hltv.org/results?offset={i * 100}')
+        with open(f'data/matches_links_{i}.json', 'w') as file:
+            json.dump(matches_links, file)
+
+
+t = []
 # get_info(m_links)
-stats_train(m_links)
+for i in range(8):
+    t.append(Thread(target=stats_train, args=(f'data/matches_links_{i}.json', i)))
+
+for i in range(8):
+    t[i].start()
+
+
 
