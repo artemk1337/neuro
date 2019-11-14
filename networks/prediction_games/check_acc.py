@@ -14,7 +14,6 @@ from keras.callbacks import ModelCheckpoint, TerminateOnNaN, ReduceLROnPlateau
 from keras import backend as K
 from sklearn.metrics import roc_auc_score
 import tensorflow as tf
-from keras.optimizers import Adam
 
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, BaggingRegressor
 import _pickle as cPickle
@@ -94,77 +93,52 @@ def load_data_1():
     return tr_x, tr_y, te_x, te_y
 
 
-def create_model():
-    seq = Sequential()
-    seq.add(Dense(100, input_dim=874, activation='relu'))
-    seq.add(Dense(50, activation='relu'))
-    seq.add(Dense(1, activation='sigmoid'))
-    return seq
+a, b, c, d = load_data_1()
+
+clf = cPickle.load(open('data/models/rf.pkl', 'rb'))
+clf1 = cPickle.load(open('rf_tmp.pkl', 'rb'))
+
+m = keras.models.load_model('data/models/model')
+
+print(f'neuro - {int(m.evaluate(a[:], b[:])[1] * 100)}%')
+print(f'neuro - {int(m.evaluate(c[:], d[:])[1] * 100)}%')
+print(f'forest te - {int(clf.score(a, b) * 100)}%')
+print(f'forest tr - {int(clf.score(c, d) * 100)}%')
+print(f'false-forest te - {int(clf1.score(a, b) * 100)}%')
+print(f'false-forest tr - {int(clf1.score(c, d) * 100)}%')
 
 
-metr = 'acc'
-loss = 'binary_crossentropy'
-optimizer = 'RMSprop'
-batch_size = 64
-epochs = 500
+quit()
 
 
-def train(tr_x, tr_y, te_x, te_y, seq):
-    global history
-    seq.compile(loss=loss, optimizer=optimizer, metrics=[metr])
-    checkpoint = ModelCheckpoint('weights.hdf5',
-                                 monitor=f'val_{metr}',
-                                 verbose=1,
-                                 save_best_only=True)
-    history = seq.fit(tr_x[:], tr_y[:], batch_size=batch_size,
-                      epochs=epochs, verbose=2,
-                      callbacks=[checkpoint,
-                                 TerminateOnNaN(),
-                                 ReduceLROnPlateau(monitor='val_loss',
-                                                   factor=0.5,
-                                                   patience=100)],
-                      validation_data=(te_x[:], te_y[:]),
-                      shuffle=True)
-    # seq.load_weights(f'weights.hdf5')
-    seq.save(f'model')
+clf_test = cPickle.load(open('data/models/test/rf.pkl', 'rb'))
+print(f'forest te - {int(clf_test.score(a, b) * 100)}%')
+print(f'forest tr - {int(clf_test.score(c, d) * 100)}%')
 
 
-def ploting():
-    # print(history.history.keys())
-    ac = []
-    for i in history.history.keys():
-        ac.append(i)
-    loss = history.history[ac[2]]
-    val_loss = history.history[ac[0]]
-    acc = history.history[ac[3]]
-    val_acc = history.history[ac[1]]
-    epochs = range(1, len(loss) + 1)
-    fig = plt.figure()
-    ax1 = fig.add_subplot(2, 1, 1)
-    ax2 = fig.add_subplot(2, 1, 2)
-    ax1.plot(epochs, loss, 'bo', label='Training loss')
-    ax1.plot(epochs, val_loss, 'b', label='Validation loss', color='r')
-    ax1.set_title('Training and validation loss')
-    ax1.set_xlabel('Epochs')
-    ax1.set_ylabel('Loss')
-    ax1.legend()
-    ax2.plot(epochs, acc, 'bo', label='Training acc')
-    ax2.plot(epochs, val_acc, 'b', label='Validation acc', color='r')
-    ax2.set_title('Training and validation accuracy')
-    ax2.set_xlabel('Epochs')
-    ax2.set_ylabel('Accuracy')
-    ax2.legend()
-    for ax in fig.axes:
-        ax.grid(True)
-    plt.savefig('graph')
-    plt.show()
+quit()
+
+tmp_x = []
+tmp_y = []
+for i in range(a.shape[0]):
+    if clf.score(a[i:i+1], b[i:i+1]) == 0:
+        tmp_x.append(a[i])
+        tmp_y.append(b[i])
+
+tmp_x = np.asarray(tmp_x)
+tmp_y = np.asarray(tmp_y)
 
 
-def main():
-    a, b, c, d = load_data_1()
-    m = create_model()
-    train(a, b, c, d, m)
-    ploting()
+tmp_xe = []
+tmp_ye = []
+for i in range(c.shape[0]):
+    if clf.score(c[i:i+1], d[i:i+1]) == 0:
+        tmp_xe.append(c[i])
+        tmp_ye.append(d[i])
+
+tmp_xe = np.asarray(tmp_xe)
+tmp_ye = np.asarray(tmp_ye)
+# print(tmp_x)
 
 
 def rfc1(a, b, c, d, s):
@@ -207,18 +181,8 @@ def rfc1(a, b, c, d, s):
             else:
                 k_fail += 1
         i_fail += 1
-    return g_perfect[0], g_perfect[1]
 
 
-def main1(s):
-    a, b, c, d = load_data_1()
-    i, k = rfc1(a, b, c, d, s)
+rfc1(tmp_x, tmp_y, tmp_xe, tmp_ye, 'rf_tmp.pkl')
 
 
-"""Neuro"""
-main()
-"""Random forest"""
-main1('rf.pkl')
-main1('rf1.pkl')
-main1('rf2.pkl')
-main1('rf3.pkl')

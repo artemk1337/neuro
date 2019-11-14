@@ -5,39 +5,11 @@ import numpy as np
 import json
 import csv
 from threading import Thread
+import keras
+import _pickle as cPickle
+
 
 counter_last_matches = 10
-
-
-def parse(url):
-    matches_links = []
-    page = requests.get(url)
-    # Success - 200
-    if page.status_code != 200:
-        exit(-1)
-    soup = BeautifulSoup(page.text, "html.parser")
-    # print(soup)
-    new = []
-    for i in soup.findAll('a', class_='a-reset'):
-        new.append(i.get('href'))
-    for i in new:
-        if re.search(r'\bmatches\b', i):
-            matches_links.append(i)
-    del new
-    return matches_links
-
-
-def parse_links():
-    # Первая страница
-    matches_links = parse('https://www.hltv.org/results')
-    with open('data/matches_links_0.json', 'w') as file:
-        json.dump(matches_links, file)
-    # Остальные страницы
-    for i in range(1, 100):  # max - 4930
-        # print(i)
-        matches_links = parse(f'https://www.hltv.org/results?offset={i * 100}')
-        with open(f'data/matches_links_{i}.json', 'w') as file:
-            json.dump(matches_links, file)
 
 
 # Optimized
@@ -91,7 +63,10 @@ def get_players(url):
         mp.append(page.findAll('span', class_='statsVal')[3].text)
         dpr.append(page.findAll('span', class_='statsVal')[4].text)
         rc.append(page.findAll('span', class_='statsVal')[5].text.split('%')[0])
-    return kd, kpr, hd, mp, dpr, rc, names
+    new = kd + kpr + hd + mp + dpr + rc
+    for i in range(len(new)):
+        new[i] = float(new[i])
+    return new
 
 
 def check_size(arr, i):
@@ -162,16 +137,6 @@ def get_data(url):
         tmp2 = page.findAll('div', class_='teamName')[1].text
         check_size([tmp1, tmp2], 2)
         return [tmp1, tmp2]
-
-    # Optimized
-    def get_g_score(url):
-        page = requests.get(url)
-        tmp = BeautifulSoup(page.text, "html.parser")
-        tmp1 = tmp.findAll('div', class_='team1-gradient')[0] \
-            .findAll('div')[1].text
-        tmp2 = tmp.findAll('div', class_='team2-gradient')[0] \
-            .findAll('div')[1].text
-        return float(int(tmp1) / (int(tmp1) + int(tmp2)))
 
     # Optimized
     def get_history_score(url, current_date):
@@ -359,68 +324,38 @@ def get_data(url):
         # print(get_g_score(url)) # Perfect
         # print(*get_history_score(url, date)) # Perfect
         # print(get_prize_pull(url)) # Perfect
-        tmp = get_players_1(url, -1)
+        tmp = get_players(url)
         arr1, arr2 = all_stat_team(url, date)
-        new_list1 = [(url,
-                      *get_team_name(url),
-                      date,
-                      get_g_score(url),
-                      *get_history_score(url, date),
-                      get_prize_pull(url),
-                      *tmp,
-                      *arr1,
-                      *arr2,)
+        new_list1 = [*get_history_score(url, date),
+                     get_prize_pull(url),
+                     *tmp,
+                     *arr1,
+                     *arr2,
                      ]
-        with open('data.csv', "a+", newline="") as file:
-            writer = csv.writer(file)
-            writer.writerows(new_list1)
+        return new_list1
         # Final size = 79 + 80 * x
     except:
         pass
 
 
-# parse_links()
-first_line = [("URL", "NAME1", "NAME2", 'DATE', 'G_SCORE (A/(A + B))',
-               'HISTORY_SCORE_A', 'HISTORY_SCORE_B',
-               'HISTORY_SCORE_MAPS ((SUM(A - B)/N + 16) / 32)' 'PRIZE_POOL',
-               'KD x 10', 'KPR x 10', 'HEADSHOTS x 10', 'MAPS x 10',
-               'DPR x 10', 'RC x 10', 'DONT TRY TO UNDERSTAND!!!!'
-               )]
-
-"""with open('data.csv', "a+", newline="") as file:
-    writer = csv.writer(file)
-    writer.writerows(first_line)"""
-
-
-def main(arr, i):
-    for k in range(len(arr)):
-        error = 0
-        with open('data.csv', "r", newline="") as file:
-            reader = csv.reader(file)
-            for row in reader:
-                if row[0] == f'https://www.hltv.org{arr[k]}':
-                    error = 1
-        if error == 0:
-            print(f'Матч - {k}, поток - {i}')
-            print(f'https://www.hltv.org{arr[k]}')
-            get_data(f'https://www.hltv.org{arr[k]}')
-    """for k in range(len(arr)):
-        print(f'Матч - {k}, поток - {i}')
-        print(f'https://www.hltv.org{arr[k]}')
-        get_data(f'https://www.hltv.org{arr[k]}')"""
+# a = get_data('https://www.hltv.org/matches/2337359/nip-vs-big-esl-pro-league-season-10-europe')
+a = np.load('match.npy')
+a = np.asarray(a, dtype=np.float)
+a = np.array([a])
+m = keras.models.load_model('data/models/model')
+# m = keras.models.load_model('model')
+clf = cPickle.load(open('rf.pkl', 'rb'))
+clf1 = cPickle.load(open('rf1.pkl', 'rb'))
+clf2 = cPickle.load(open('rf2.pkl', 'rb'))
+clf3 = cPickle.load(open('rf3.pkl', 'rb'))
+print([f'{int(clf.predict(a[:])[0] * 100)}%',
+       f'{int(clf1.predict(a[:])[0] * 100)}%',
+       f'{int(clf2.predict(a[:])[0] * 100)}%',
+       f'{int(clf3.predict(a[:])[0] * 100)}%',
+       f'{int(m.predict(a[:])[0, 0] * 100)}%'],
+      f'average - {(clf.predict(a[:])[0] + clf1.predict(a[:])[0] + clf2.predict(a[:])[0] + clf3.predict(a[:])[0] + m.predict(a[:])[0, 0]) / 5}')
+print('neuro - ', int(m.predict(a[0:1])[0, 0] * 100), '%')
+clf = cPickle.load(open('data/models/rf.pkl', 'rb'))
+print(f'forest - {int(clf.predict(a[:])[0] * 100)}%')
 
 
-"""with open(f'data/matches_links_1.json') as file:
-    a = json.load(file)
-main(a, 1)"""
-
-
-tmp = []
-for i in range(0, 20):
-    with open(f'data/matches_links_{i}.json') as file:
-        a = json.load(file)
-    tmp.append(Thread(target=main, args=(a, i)))
-
-
-for i in tmp:
-    i.start()
