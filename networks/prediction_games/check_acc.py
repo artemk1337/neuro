@@ -96,93 +96,18 @@ def load_data_1():
 a, b, c, d = load_data_1()
 
 clf = cPickle.load(open('data/models/rf.pkl', 'rb'))
-clf1 = cPickle.load(open('rf_tmp.pkl', 'rb'))
 
 m = keras.models.load_model('data/models/model')
 
 print(f'neuro - {int(m.evaluate(a[:], b[:])[1] * 100)}%')
 print(f'neuro - {int(m.evaluate(c[:], d[:])[1] * 100)}%')
-print(f'forest te - {int(clf.score(a, b) * 100)}%')
-print(f'forest tr - {int(clf.score(c, d) * 100)}%')
-print(f'false-forest te - {int(clf1.score(a, b) * 100)}%')
-print(f'false-forest tr - {int(clf1.score(c, d) * 100)}%')
+print(f'forest tr - {int(clf.score(a, b) * 100)}%')
+print(f'forest te - {int(clf.score(c, d) * 100)}%')
 
 
-quit()
+# quit()
 
 
 clf_test = cPickle.load(open('data/models/test/rf.pkl', 'rb'))
-print(f'forest te - {int(clf_test.score(a, b) * 100)}%')
-print(f'forest tr - {int(clf_test.score(c, d) * 100)}%')
-
-
-quit()
-
-tmp_x = []
-tmp_y = []
-for i in range(a.shape[0]):
-    if clf.score(a[i:i+1], b[i:i+1]) == 0:
-        tmp_x.append(a[i])
-        tmp_y.append(b[i])
-
-tmp_x = np.asarray(tmp_x)
-tmp_y = np.asarray(tmp_y)
-
-
-tmp_xe = []
-tmp_ye = []
-for i in range(c.shape[0]):
-    if clf.score(c[i:i+1], d[i:i+1]) == 0:
-        tmp_xe.append(c[i])
-        tmp_ye.append(d[i])
-
-tmp_xe = np.asarray(tmp_xe)
-tmp_ye = np.asarray(tmp_ye)
-# print(tmp_x)
-
-
-def rfc1(a, b, c, d, s):
-    g_perfect = [1, 1]
-    k_fail = 0
-    i_fail = 0
-    k = 0
-    g_max = 0
-    g_max_te = 0
-    for i in range(1, 301):
-        with open('max_res.json', 'w') as file:
-            json.dump({"i": g_perfect[0], "k": g_perfect[1], "g_max": g_max, "g_max_te": g_max_te}, file)
-        print(f'i: {i}, k: {k},\n'
-              f'g_max: {g_max}, g_max_te: {g_max_te}')
-        if i_fail >= 30:
-            break
-        prev_good_te = 0
-        for k in range(1, 501):
-            if k_fail >= 30:
-                k_fail = 0
-                # i_fail += 1
-                # k += 30
-                break
-            clf = RandomForestClassifier(n_estimators=i, max_depth=k, random_state=0)
-            clf.fit(a, b)
-            tmp = clf.score(a, b)
-            tmp1 = clf.score(c, d)
-            if tmp1 > prev_good_te:
-                k_fail = 0
-                prev_good_te = tmp1
-            if g_max_te < tmp1 <= tmp:
-                g_max = tmp
-                g_max_te = tmp1
-                i_fail = 0
-                k_fail = 0
-                g_perfect[0] = i
-                g_perfect[1] = k
-                with open(s, 'wb') as f:
-                    cPickle.dump(clf, f)
-            else:
-                k_fail += 1
-        i_fail += 1
-
-
-rfc1(tmp_x, tmp_y, tmp_xe, tmp_ye, 'rf_tmp.pkl')
-
-
+print(f'forest tr new - {int(clf_test.score(a, b) * 100)}%')
+print(f'forest te new - {int(clf_test.score(c, d) * 100)}%')

@@ -338,24 +338,16 @@ def get_data(url):
         pass
 
 
-# a = get_data('https://www.hltv.org/matches/2337359/nip-vs-big-esl-pro-league-season-10-europe')
+a = get_data('https://www.hltv.org/matches/2337980/illuminar-vs-ancient-united-masters-league-season-2')
+np.save('match', a)
 a = np.load('match.npy')
 a = np.asarray(a, dtype=np.float)
 a = np.array([a])
+print(a.shape)
 m = keras.models.load_model('data/models/model')
-# m = keras.models.load_model('model')
-clf = cPickle.load(open('rf.pkl', 'rb'))
-clf1 = cPickle.load(open('rf1.pkl', 'rb'))
-clf2 = cPickle.load(open('rf2.pkl', 'rb'))
-clf3 = cPickle.load(open('rf3.pkl', 'rb'))
-print([f'{int(clf.predict(a[:])[0] * 100)}%',
-       f'{int(clf1.predict(a[:])[0] * 100)}%',
-       f'{int(clf2.predict(a[:])[0] * 100)}%',
-       f'{int(clf3.predict(a[:])[0] * 100)}%',
-       f'{int(m.predict(a[:])[0, 0] * 100)}%'],
-      f'average - {(clf.predict(a[:])[0] + clf1.predict(a[:])[0] + clf2.predict(a[:])[0] + clf3.predict(a[:])[0] + m.predict(a[:])[0, 0]) / 5}')
-print('neuro - ', int(m.predict(a[0:1])[0, 0] * 100), '%')
+print(f'neuro - {int(m.predict(a[0:1])[0, 0] * 100)}%')
 clf = cPickle.load(open('data/models/rf.pkl', 'rb'))
-print(f'forest - {int(clf.predict(a[:])[0] * 100)}%')
-
+print(f'forest good - {int(clf.predict(a[:])[0] * 100)}%')
+clf1 = cPickle.load(open('data/models/test/rf.pkl', 'rb'))
+print(f'forest test - {int(clf1.predict(a[:])[0] * 100)}%')
 

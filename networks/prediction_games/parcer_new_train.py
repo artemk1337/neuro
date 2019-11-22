@@ -33,7 +33,7 @@ def parse_links():
     with open('data/matches_links_0.json', 'w') as file:
         json.dump(matches_links, file)
     # Остальные страницы
-    for i in range(1, 100):  # max - 4930
+    for i in range(1, 5):  # max - 4930
         # print(i)
         matches_links = parse(f'https://www.hltv.org/results?offset={i * 100}')
         with open(f'data/matches_links_{i}.json', 'w') as file:
@@ -379,7 +379,7 @@ def get_data(url):
         pass
 
 
-# parse_links()
+parse_links()
 first_line = [("URL", "NAME1", "NAME2", 'DATE', 'G_SCORE (A/(A + B))',
                'HISTORY_SCORE_A', 'HISTORY_SCORE_B',
                'HISTORY_SCORE_MAPS ((SUM(A - B)/N + 16) / 32)' 'PRIZE_POOL',
@@ -410,12 +410,13 @@ def main(arr, i):
         get_data(f'https://www.hltv.org{arr[k]}')"""
 
 
-"""with open(f'data/matches_links_1.json') as file:
-    a = json.load(file)
-main(a, 1)"""
+for i in range(3):
+    with open(f'data/matches_links_{i}.json') as file:
+        a = json.load(file)
+    main(a, 1)
 
 
-tmp = []
+"""tmp = []
 for i in range(0, 20):
     with open(f'data/matches_links_{i}.json') as file:
         a = json.load(file)
@@ -424,3 +425,4 @@ for i in range(0, 20):
 
 for i in tmp:
     i.start()
+"""
