@@ -3,19 +3,14 @@ from __future__ import print_function
 import numpy as np
 
 import random
-import matplotlib.pyplot as plt
 from keras.datasets import mnist
-from keras.models import Model, Sequential
-from keras.layers import Input, Flatten, Dense, Dropout, Lambda, Conv2D, MaxPool2D
+from keras.models import Model
+from keras.layers import Input, Flatten, Dense, Dropout, Lambda
 from keras.optimizers import RMSprop
 from keras import backend as K
-from keras.callbacks import ModelCheckpoint
-from keras.applications import MobileNetV2
-from PIL import Image
-
 
 num_classes = 10
-epochs = 5
+epochs = 20
 
 
 def euclidean_distance(vects):
@@ -102,6 +97,24 @@ te_pairs, te_y = create_pairs(x_test, digit_indices)
 # network definition
 base_network = create_base_network(input_shape)
 
+
+"""IMPORTANT"""
+
+
+import matplotlib.pyplot as plt
+
+print(te_pairs.shape)
+plt.imshow(te_pairs[10, 0])
+plt.show()
+plt.imshow(te_pairs[10, 0])
+plt.show()
+print(te_y[10])
+quit()
+
+
+"""IMPORTANT"""
+
+
 input_a = Input(shape=input_shape)
 input_b = Input(shape=input_shape)
 
@@ -132,6 +145,3 @@ te_acc = compute_accuracy(te_y, y_pred)
 
 print('* Accuracy on training set: %0.2f%%' % (100 * tr_acc))
 print('* Accuracy on test set: %0.2f%%' % (100 * te_acc))
-
-
-print(model.predict([tr_pairs[:1, 0], tr_pairs[:1, 0]]))
