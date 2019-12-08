@@ -64,7 +64,7 @@ class Neuro(object):
                                      save_best_only=True)
         history = model.fit(x[:], y[:],
                             batch_size=64,
-                            epochs=200,
+                            epochs=300,
                             verbose=2,
                             callbacks=[checkpoint,
                                        TerminateOnNaN(),
@@ -100,30 +100,30 @@ class TR(object):
     def __init__(self, max_depth=5):
         # self.loss = 'mse'
         self.ft = None
+        self.left = None
+        self.right = None
         self.label = None
         self.samples = None
         self.gain = None
-        self.left = None
-        self.right = None
         self.threshold = None
         self.depth = 0
-        self.root = None
+        self.start = None
         self.max_depth = max_depth
 
     def fit(self, x, y):
         # Create first level
-        self.root = TR()
-        self.root._grow_tree(x, y)
-        self.root._prune(self.max_depth, self.root.samples)
+        self.start = TR()
+        self.start._grow_tree_(x, y)
+        self.start._prune_(self.max_depth, self.start.samples)
 
     def predict(self, x):
-        return np.array([self.root._predict(f) for f in x])
+        return np.array([self.start._predict_(f) for f in x])
 
     def show_tree(self):
-        self.root._show_tree(0, ' ')
+        self.start._show_tree_(0, ' ')
 
     # Grow tree
-    def _grow_tree(self, x, y, classes_in_top=1, depth=0):
+    def _grow_tree_(self, x, y, classes_in_top=1):
         """
         Build a decision tree by recursively finding the best split.
 
@@ -140,16 +140,15 @@ class TR(object):
             void
         """
         self.samples = x.shape[0]
-        # Stop-factor
+        # Stop
         """ For classification: len(np.unique(y)) <= 1  -  1 class in top
-        For regression: y <= 5 or more  -  5 or more classes in top
-        Also can add self.depth >= self.max_depth """
+        For regression: y <= 5 or more  -  5 or more classes in top """
         if len(np.unique(y)) <= classes_in_top:
             self.label = y[0]
             return
         self.label = np.mean(y)
-        loss = self._loss_mse(y)
-        best_gain, best_ft, best_th = 0.0, None, None
+        loss = self._loss_mse_(y)
+        best_gain, best_ft, best_th = 0, None, None
         for input_col in range(x.shape[1]):
             # Sort classes
             feature_level = np.unique(x[:, input_col])
@@ -158,7 +157,7 @@ class TR(object):
             for i in th:
                 # Index 0 - left, 1 - right
                 y_ = [y[x[:, input_col] <= i], y[x[:, input_col] > i]]
-                new = [self._loss_mse(y_[0]), self._loss_mse(y_[1])]
+                new = [self._loss_mse_(y_[0]), self._loss_mse_(y_[1])]
                 n_ = [float(y_[0].shape[0]) / self.samples, float(y_[1].shape[0]) / self.samples]
                 new_gain = loss - (n_[0] * new[0] + n_[1] * new[1])
                 if new_gain > best_gain:
@@ -169,33 +168,37 @@ class TR(object):
         # Recursive
         self.left, self.right = TR(), TR()
         self.left.depth, self.right.depth = self.depth + 1, self.depth + 1
-        self.left._grow_tree(x[x[:, self.ft] <= self.threshold], y[x[:, self.ft] <= self.threshold], depth + 1)
-        self.right._grow_tree(x[x[:, self.ft] > self.threshold], y[x[:, self.ft] > self.threshold], depth + 1)
+        self.left._grow_tree_(x[x[:, self.ft] <= self.threshold], y[x[:, self.ft] <= self.threshold])
+        self.right._grow_tree_(x[x[:, self.ft] > self.threshold], y[x[:, self.ft] > self.threshold])
 
-    def _loss_mse(self, y):
+    def _loss_mse_(self, y):
         return np.mean((y - np.mean(y)) ** 2)
 
-    def _prune(self, max_depth, samples):
+    def _prune_(self, max_depth, samples):
         if self.ft == None:
             return
-        self.left._prune(max_depth, samples)
-        self.right._prune(max_depth, samples)
+        # Cut tree
         if self.depth >= max_depth:
             self.left, self.right, self.ft = None, None, None
+            return
+        self.left._prune_(max_depth, samples)
+        self.right._prune_(max_depth, samples)
+        '''if self.depth >= max_depth:
+            self.left, self.right, self.ft = None, None, None'''
 
-    def _predict(self, x):
+    def _predict_(self, x):
         if self.ft != None:
             if x[self.ft] <= self.threshold:
-                return self.left._predict(x)
-            return self.right._predict(x)
+                return self.left._predict_(x)
+            return self.right._predict_(x)
         return self.label
 
-    def _show_tree(self, depth, cond):
-        base = '  ' * depth + cond
+    def _show_tree_(self, depth, separator):
+        base = ' ' * 2 * depth + separator
         if self.ft != None:
             print(str(base) + 'if X[' + str(self.ft) + '] <= ' + str(self.threshold))
-            self.left._show_tree(f'{depth + 1} then ')
-            self.right._show_tree(f'{depth + 1} else ')
+            self.left._show_tree_(f'{depth + 1} then ')
+            self.right._show_tree_(f'{depth + 1} else ')
         else:
             print(str(base) + '{value: ' + str(self.label) + ', samples: ' + str(self.samples) + '}')
 
