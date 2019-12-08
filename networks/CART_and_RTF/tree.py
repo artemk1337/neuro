@@ -222,8 +222,8 @@ def load_data(fn):
 if __name__ == "__main__":
     x_tr, x_te, y_tr, y_te = load_data('sdss_redshift.csv')
     tm = time.time()
-    rgf = TR(max_depth=10)
-    # rgf = DecisionTreeRegressor(max_depth=10)
+    # rgf = TR(max_depth=10)
+    rgf = DecisionTreeRegressor(max_depth=10)
     print('<=====FITTING=====>')
     rgf.fit(x_tr, y_tr)
     print('<=====PREDICTION=====>')
