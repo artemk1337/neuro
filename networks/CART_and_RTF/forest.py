@@ -1,9 +1,9 @@
 import tree
+import warnings
 import os
 import sys
 import shutil
 import numpy as np
-import re
 import random
 import csv
 import time
@@ -16,7 +16,7 @@ from sklearn.tree import DecisionTreeRegressor
 
 
 g_trees = 50
-max_depth = 50
+max_depth = 10
 
 
 def load_data(fn):
@@ -65,9 +65,11 @@ def load_data_predict(fn):
 
 
 def save(fn, y1, prediction_1, y2, prediction_2):
+    text = {"train": np.mean(np.abs(y1 - prediction_1).astype('float64')),
+            "test": np.mean(np.abs(y2 - prediction_2).astype('float64'))}
+    print(text)
     with open(fn, 'w') as f:
-        json.dump({"train": np.mean(np.abs(y1 - prediction_1).astype('float64')),
-                   "test": np.mean(np.abs(y2 - prediction_2).astype('float64'))},
+        json.dump(text,
                   f, indent=4, separators=(',', ': '))
 
 
@@ -82,9 +84,10 @@ def plot(y_all, prediction_all):
 predictions = [[], [], []]
 
 
+# А тут многопоточность не работает :c
+# Хочу писать на плюсах
 class Thread_tree(Thread):
     def __init__(self, name, new_data_x, new_data_y, i):
-        """Инициализация потока"""
         Thread.__init__(self)
         self.name = name
         self.new_data_x = new_data_x
@@ -92,13 +95,12 @@ class Thread_tree(Thread):
         self.i = i
 
     def run(self):
-        """Запуск потока"""
         '''
         Use DecisionTreeRegressor because
         faster but work as good as tree.TR.
         '''
-        # rtf = tree.TR(max_depth=max_depth)
-        rtf = DecisionTreeRegressor(max_depth=max_depth)
+        rtf = tree.TR(max_depth=max_depth)
+        # rtf = DecisionTreeRegressor(max_depth=max_depth)
         rtf.fit(new_data_x[self.i], new_data_y[self.i])
         predictions[0].append(np.asarray(rtf.predict(x1)))
         predictions[1].append(np.asarray(rtf.predict(x2)))
@@ -106,9 +108,10 @@ class Thread_tree(Thread):
         print(f'{self.name} - finish')
 
 
-def predict(x1, x2, x3, new_data_x, new_data_y):
+def predict(new_data_x, new_data_y):
     def create_threads():
         threads = []
+        print('Just wait ~5 minutes :) ')
         # Create threads
         for i in range(g_trees):
             name = f"Tree №{i + 1}"
@@ -140,9 +143,12 @@ def save_csv(x3, prediction_3):
             writer.writerow(line)
 
 
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+tm = time.time()
 new_data_x, new_data_y, x1, x2, y1, y2, top = load_data('sdss_redshift.csv')
 x3 = load_data_predict('sdss.csv')
-prediction_1, prediction_2, prediction_3 = predict(x1, x2, x3, new_data_x, new_data_y)
+prediction_1, prediction_2, prediction_3 = predict(new_data_x, new_data_y)
 plot(np.concatenate((y1, y2)), np.concatenate((prediction_1, prediction_2)))
-save('redshift.json', y1, prediction_1, y2, prediction_2)
+save('redhsift.json', y1, prediction_1, y2, prediction_2)
 save_csv(x3, prediction_3)
+print(f'Время работы - {round(time.time() - tm, 2)} sec')

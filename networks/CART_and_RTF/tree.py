@@ -3,6 +3,7 @@ import os
 import csv
 import time
 import matplotlib.pyplot as plt
+from scipy import optimize
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
@@ -113,8 +114,8 @@ class TR(object):
     def fit(self, x, y):
         # Create first level
         self.start = TR()
+        self.start.max_depth = self.max_depth
         self.start._grow_tree_(x, y)
-        self.start._prune_(self.max_depth, self.start.samples)
 
     def predict(self, x):
         return np.array([self.start._predict_(f) for f in x])
@@ -122,8 +123,7 @@ class TR(object):
     def show_tree(self):
         self.start._show_tree_(0, ' ')
 
-    # Grow tree
-    def _grow_tree_(self, x, y, classes_in_top=1):
+    def _grow_tree_(self, x, y):
         """
         Build a decision tree by recursively finding the best split.
 
@@ -131,26 +131,35 @@ class TR(object):
             new X array
         :param y:
             new Y array
-        :param classes_in_top:
-            1 - very slow, high accuracy (acc like in sklearn); time ~ 20 sec
-            500 - normal, normal accuracy
-            1000+ - fast, low accuracy
 
         :return:
             void
         """
         self.samples = x.shape[0]
-        # Stop
-        """ For classification: len(np.unique(y)) <= 1  -  1 class in top
-        For regression: y <= 5 or more  -  5 or more classes in top """
-        if len(np.unique(y)) <= classes_in_top:
-            self.label = y[0]
-            return
         self.label = np.mean(y)
-        loss = self._loss_mse_(y)
-        best_gain, best_ft, best_th = 0, None, None
+        self.ft = None
+        self.gain = np.inf
+        self.threshold = x[0, 0]
+        # Stop-factor
+        """ For classification: len(np.unique(y)) <= 1  -  1 class in top
+        For regression: y <= 5 or more  -  5 or more the nearest classes in top """
+        if len(np.unique(y)) <= 5 or self.depth >= self.max_depth:
+            return
+        # man - https://spark.apache.org/docs/2.2.0/mllib-decision-tree.html
+        self._optimizer_(x, y)
+        # Recursive
+        self.left, self.right = TR(), TR()
+        self.left.depth, self.right.depth = self.depth + 1, self.depth + 1
+        self.left.max_depth, self.right.max_depth = self.max_depth, self.max_depth
+        self.left._grow_tree_(x[x[:, self.ft] <= self.threshold], y[x[:, self.ft] <= self.threshold])
+        self.right._grow_tree_(x[x[:, self.ft] > self.threshold], y[x[:, self.ft] > self.threshold])
+
+    # Find best splitter
+    def _optimizer_(self, x, y):
+        best_ft, best_th, best_gain = self.ft, self.threshold, self.gain
         for input_col in range(x.shape[1]):
-            # Sort classes
+            # More correctly, mae like in sklearn, works VERY slow
+            """# Sort classes
             feature_level = np.unique(x[:, input_col])
             # Average between neighbors
             th = (feature_level[:-1] + feature_level[1:]) / 2
@@ -159,32 +168,38 @@ class TR(object):
                 y_ = [y[x[:, input_col] <= i], y[x[:, input_col] > i]]
                 new = [self._loss_mse_(y_[0]), self._loss_mse_(y_[1])]
                 n_ = [float(y_[0].shape[0]) / self.samples, float(y_[1].shape[0]) / self.samples]
-                new_gain = loss - (n_[0] * new[0] + n_[1] * new[1])
-                if new_gain > best_gain:
-                    best_gain, best_ft, best_th = new_gain, input_col, i
+                new_gain = n_[0] * new[0] + n_[1] * new[1]
+                if new_gain < best_gain:
+                    best_gain, best_ft, best_th = new_gain, input_col, i"""
+            # Scipy, loss good, works slow
+            feature_level = np.unique(x[:, input_col])
+            res = optimize.minimize_scalar(self._minimize_scalar_, args=(input_col, x, y), bounds=(feature_level[1], feature_level[-1]), method='Bounded')
+            value = res.x
+            new_gain = res.fun
+            if new_gain < best_gain:
+                best_gain, best_ft, best_th = new_gain, input_col, value
+            # Mean digit, works fast and better!!!
+            '''i = np.mean(x[:, input_col])
+            y_ = [y[x[:, input_col] <= i], y[x[:, input_col] > i]]
+            new = [self._loss_mse_(y_[0]), self._loss_mse_(y_[1])]
+            n_ = [float(y_[0].shape[0]) / self.samples, float(y_[1].shape[0]) / self.samples]
+            new_gain = n_[0] * new[0] + n_[1] * new[1]
+            if new_gain < best_gain:
+                best_gain, best_ft, best_th = new_gain, input_col, i'''
         self.ft = best_ft
         self.gain = best_gain
         self.threshold = best_th
-        # Recursive
-        self.left, self.right = TR(), TR()
-        self.left.depth, self.right.depth = self.depth + 1, self.depth + 1
-        self.left._grow_tree_(x[x[:, self.ft] <= self.threshold], y[x[:, self.ft] <= self.threshold])
-        self.right._grow_tree_(x[x[:, self.ft] > self.threshold], y[x[:, self.ft] > self.threshold])
+
+    # For method from seminar
+    def _minimize_scalar_(self, value, feature, x, y):
+        y_ = [y[x[:, feature] <= value], y[x[:, feature] > value]]
+        new = [self._loss_mse_(y_[0]), self._loss_mse_(y_[1])]
+        n_ = [float(y_[0].shape[0]) / self.samples, float(y_[1].shape[0]) / self.samples]
+        new_gain = n_[0] * new[0] + n_[1] * new[1]
+        return new_gain
 
     def _loss_mse_(self, y):
         return np.mean((y - np.mean(y)) ** 2)
-
-    def _prune_(self, max_depth, samples):
-        if self.ft == None:
-            return
-        # Cut tree
-        if self.depth >= max_depth:
-            self.left, self.right, self.ft = None, None, None
-            return
-        self.left._prune_(max_depth, samples)
-        self.right._prune_(max_depth, samples)
-        '''if self.depth >= max_depth:
-            self.left, self.right, self.ft = None, None, None'''
 
     def _predict_(self, x):
         if self.ft != None:
@@ -197,8 +212,8 @@ class TR(object):
         base = ' ' * 2 * depth + separator
         if self.ft != None:
             print(str(base) + 'if X[' + str(self.ft) + '] <= ' + str(self.threshold))
-            self.left._show_tree_(f'{depth + 1} then ')
-            self.right._show_tree_(f'{depth + 1} else ')
+            self.left._show_tree_(depth + 1, f'{depth + 1} then ')
+            self.right._show_tree_(depth + 1, f'{depth + 1} else ')
         else:
             print(str(base) + '{value: ' + str(self.label) + ', samples: ' + str(self.samples) + '}')
 
@@ -222,19 +237,16 @@ def load_data(fn):
 if __name__ == "__main__":
     x_tr, x_te, y_tr, y_te = load_data('sdss_redshift.csv')
     tm = time.time()
-    # rgf = TR(max_depth=10)
-    rgf = DecisionTreeRegressor(max_depth=10)
+    rgf = TR(max_depth=10)
+    # rgf = DecisionTreeRegressor(max_depth=10)
     print('<=====FITTING=====>')
     rgf.fit(x_tr, y_tr)
     print('<=====PREDICTION=====>')
-    # print(y_te)
-    # print(rgf.predict(x_te))
     print((np.mean(np.abs(y_te - rgf.predict(x_te)))).astype('float32'), '- mae loss')  # mae loss
     print('<=====TIME=====>')
     print(time.time() - tm, 'sec')
     # print('<=====TREE=====>')
     # rgf.show_tree()
-    # quit()
     print('<=====NEURO=====>')
     neuro = Neuro()
     neuro.fit(x_tr, x_te, y_tr, y_te)
