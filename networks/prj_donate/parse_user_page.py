@@ -1,11 +1,14 @@
 import vk
 import json
 
+
 fn = 'dota2'
+
 
 token = "9d480cbc9d480cbc9d480cbc089d26ae6399d489d480cbcc0b0b00ca99b5d870cbf1cb7"  # Сервисный ключ доступа
 session = vk.Session(access_token=token)  # Авторизация
 vk_api = vk.API(session)
+
 
 with open(f'data/{fn}.txt', 'r') as f:
     data = f.readlines()
@@ -16,13 +19,13 @@ for i in data:
     tmp = int(tmp.split('\n')[0])
     arr.append(tmp)
 
-print(arr)
 
 final = {}
-
+counter = 0
 for i in range(len(arr)):
     id = arr[i]
     max_persons = 1000
+    print(i)
     try:
         user = vk_api.users.get(user_ids=id, v=5.92,
                                 fields=['sex', 'bdate', 'city', 'country', 'home_town', 'photo_id'])[0]
@@ -31,12 +34,12 @@ for i in range(len(arr)):
         d = {'user': user,
              'wall': wall,
              'sub': sub}
-        final['id'] = id
-        final['data'] = d
+        final[id] = d
+        if counter >= 1:
+            break
+        counter += 1
     except Exception:
         pass
-    if i >= max_persons:
-        break
 
 
 with open(f'data/{fn}.json', 'w') as f:
