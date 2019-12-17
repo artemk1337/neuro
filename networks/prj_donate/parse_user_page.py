@@ -28,19 +28,19 @@ counter = 0
 for i in range(len(arr)):
     id = arr[i]
     max_persons = 1000
-    print(i)
     try:
         user = vk_api.users.get(user_ids=id, v=5.92,
                                 fields=['sex', 'bdate', 'city', 'country', 'home_town', 'photo_id'])[0]
-        sub = vk_api.users.getSubscriptions(user_id=id, v=5.92)
-        wall = vk_api.wall.get(owner_id=user['id'], v=5.92)
-        d = {'user': user,
-             'wall': wall,
-             'sub': sub}
-        final[id] = d
-        if counter >= max_persons:
-            break
-        counter += 1
+        if len(user['bdate'].split('.')) == 3 and user['city']['id'] == 1:  # Check age and city
+            sub = vk_api.users.getSubscriptions(user_id=id, v=5.92)
+            wall = vk_api.wall.get(owner_id=user['id'], v=5.92)
+            d = {'user': user,
+                 'wall': wall,
+                 'sub': sub}
+            final[id] = d
+            if counter >= max_persons:
+                break
+            counter += 1
     except Exception:
         pass
 
