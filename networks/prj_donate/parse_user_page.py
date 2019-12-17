@@ -8,6 +8,8 @@ vk_api = vk.API(session)
 
 user = vk_api.users.get(user_ids='eridi96', v=5.92,
                        fields=['sex', 'bdate', 'city', 'country', 'home_town', 'photo_id'])[0]
+sub = vk_api.users.getSubscriptions(user_ids='eridi96', v=5.92)
+print(sub)
 print(user)
 # quit()
 a = vk_api.wall.get(owner_id=user['id'], v=5.92)
