@@ -1,12 +1,13 @@
 import vk
 import json
 
+fn = 'dota2'
 
 token = "9d480cbc9d480cbc9d480cbc089d26ae6399d489d480cbcc0b0b00ca99b5d870cbf1cb7"  # Сервисный ключ доступа
 session = vk.Session(access_token=token)  # Авторизация
 vk_api = vk.API(session)
 
-with open('data/dota2.txt', 'r') as f:
+with open(f'data/{fn}.txt', 'r') as f:
     data = f.readlines()
 
 arr = []
@@ -38,7 +39,7 @@ for i in range(len(arr)):
         break
 
 
-with open('data/parse.json', 'w') as f:
+with open(f'data/{fn}.json', 'w') as f:
     json.dump(final, f, separators=(',', ':'), indent=4)
 
 
