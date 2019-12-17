@@ -1,5 +1,6 @@
 import vk
 import json
+import random
 
 
 fn = 'dota2'
@@ -13,6 +14,7 @@ vk_api = vk.API(session)
 with open(f'data/{fn}.txt', 'r') as f:
     data = f.readlines()
 
+
 arr = []
 for i in data:
     tmp = i.split('id')[1]
@@ -20,6 +22,7 @@ for i in data:
     arr.append(tmp)
 
 
+random.shuffle(arr)
 final = {}
 counter = 0
 for i in range(len(arr)):
@@ -35,7 +38,7 @@ for i in range(len(arr)):
              'wall': wall,
              'sub': sub}
         final[id] = d
-        if counter >= 1:
+        if counter >= max_persons:
             break
         counter += 1
     except Exception:
