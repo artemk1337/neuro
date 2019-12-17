@@ -40,6 +40,7 @@ for i in range(len(arr)):
             final[id] = d
             if counter >= max_persons:
                 break
+            print('Counter -', counter)
             counter += 1
     except Exception:
         pass
