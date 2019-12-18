@@ -103,10 +103,14 @@ import spacy
 import pyLDAvis
 import nltk
 from nltk.corpus import stopwords
-import pyLDAvis.gensim  # don't skip this
+import pyLDAvis.gensim
+from pymystem3 import Mystem
 
 
-data = np.load('data/wgcsgo/wgcsgo_all_text.npy')
+lemm = Mystem()
+
+
+data = np.load('data/wgcsgo/wgcsgo_all_repost.npy')
 
 nltk.download('stopwords')
 nltk.download('wordnet')
@@ -116,9 +120,12 @@ stopwords_en = stopwords.words('english')
 
 x_train = [gensim.utils.simple_preprocess(text) for text in data]
 x_train = [x for x in x_train if len(x) > 100]
-x_train = [word for word in x_train if word not in stopwords_ru]
-x_train = [word for word in x_train if word not in stopwords_en]
-
+x_train = [[word for word in x if word not in stopwords_ru] for x in x_train]
+x_train = [[word for word in x if word not in stopwords_en] for x in x_train]
+print(x_train[0])
+x_train = [[lemm.lemmatize(word)[0] for word in i] for i in x_train[:2]]
+print(x_train[0])
+quit()
 
 # Build the bigram and trigram models
 bigram = gensim.models.Phrases(x_train, min_count=5, threshold=100)  # higher threshold fewer phrases.
@@ -142,12 +149,6 @@ texts = make_bigrams(x_train)
 id2word = corpora.Dictionary(texts)
 # Create Corpus
 corpus = [id2word.doc2bow(text) for text in texts]
-# View
-# print(corpus[:1])
-
-# print([[(id2word[id], freq) for id, freq in cp] for cp in corpus[:1]])
-
-# print(x_train[:1])
 
 # слово должно встретиться хотябы 5 раз и не более чем в 20% документов
 id2word.filter_extremes(no_below=5, no_above=0.2)
@@ -172,15 +173,19 @@ lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus,
                                               random_state=42,
                                               passes=20)'''
 
+
 print(lda_model.print_topics())
-quit()
-# coherence_model_lda = CoherenceModel(model=lda_model, texts=texts, dictionary=id2word, coherence='c_v')
-# coherence_lda = lda_model.get_coherence()
-print('\nCoherence Score: ', coherence_lda)
+
+
+'''coherence_model_lda = CoherenceModel(model=lda_model, texts=texts, dictionary=id2word, coherence='c_v')
+coherence_lda = coherence_model_lda.get_coherence()
+print('\nCoherence Score: ', coherence_lda)'''
 
 # Visualize the topics
 # pyLDAvis.enable_notebook()  # Only in notebook
-vis = pyLDAvis.gensim.prepare(lda_model, corpus, id2word)
-vis
+# vis = pyLDAvis.gensim.prepare(lda_model, corpus, id2word)
+visualisation = pyLDAvis.gensim.prepare(lda_model, corpus, id2word)
+pyLDAvis.save_html(visualisation, 'LDA_Visualization.html')
+
 
 
