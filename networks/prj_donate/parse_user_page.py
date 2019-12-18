@@ -1,11 +1,14 @@
 import vk
 import json
 import random
+import os
 
 
 public_name = ['wgcsgo', 'leagueoflegends', 'fortnite', 'dota2', 'worldofwarcraft']
-fn = 'worldofwarcraft'
-token = "5eda4a2a5eda4a2a5eda4a2ae95eb4eeef55eda5eda4a2a032346f2f5ec8e77246de2bb"  # Сервисный ключ доступа
+
+public_name = ['worldofwarcraft']
+
+token = '569e2f7f569e2f7f569e2f7f3056f08a7a5569e569e2f7f0b6739a62257254d2f209689'  # Сервисный ключ доступа
 
 
 session = vk.Session(access_token=token)  # Авторизация
@@ -25,7 +28,10 @@ for fn in public_name:
     random.shuffle(arr)
     final = {}
     counter = 0
-    for i in range(len(arr)):
+    if os.path.exists(f'data/{fn}.json'):
+        with open(f'data/{fn}.json') as f:
+            final = json.load(f)
+    for i in range(650, len(arr)):
         id = arr[i]
         max_persons = 1000
         try:
@@ -42,12 +48,16 @@ for fn in public_name:
                     break
                 print('Counter -', counter)
                 counter += 1
-                with open(f'data/{fn}.json', 'w') as f:
-                    json.dump(final, f, separators=(',', ':'), indent=4)
+                if counter % 50 == 0:
+                    with open(f'data/{fn}.json', 'w') as f:
+                        json.dump(final, f, separators=(',', ':'), indent=4)
         except Exception:
             # print('Error')
             pass
-
+    with open(f'data/{fn}.json', 'w') as f:
+        json.dump(final, f, separators=(',', ':'), indent=4)
+    print('<=== CHANGE TOKEN!!! ===>')
+    quit()
 
 
 
