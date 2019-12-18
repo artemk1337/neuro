@@ -141,7 +141,6 @@ texts = make_bigrams(x_train)
 # Create Dictionary
 id2word = corpora.Dictionary(texts)
 # Create Corpus
-# Term Document Frequency
 corpus = [id2word.doc2bow(text) for text in texts]
 # View
 # print(corpus[:1])
@@ -150,14 +149,11 @@ corpus = [id2word.doc2bow(text) for text in texts]
 
 # print(x_train[:1])
 
-print(corpus)
-print(len(id2word))
 # слово должно встретиться хотябы 5 раз и не более чем в 20% документов
 id2word.filter_extremes(no_below=5, no_above=0.2)
+corpus = [id2word.doc2bow(text) for text in texts]
 print(len(id2word))
 print([id2word[i] for i in range(len(id2word))])
-
-
 
 
 lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus,
@@ -176,7 +172,7 @@ lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus,
                                               random_state=42,
                                               passes=20)'''
 
-lda_model.print_topics()
+print(lda_model.print_topics())
 quit()
 # coherence_model_lda = CoherenceModel(model=lda_model, texts=texts, dictionary=id2word, coherence='c_v')
 # coherence_lda = lda_model.get_coherence()

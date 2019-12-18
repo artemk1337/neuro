@@ -118,6 +118,7 @@ len(dictionary)
 from collections import defaultdict
 import itertools    
 
+
 # Команда для строительства графика.
 def word_freq_plot(dictionary,corpus, k2=100, k1=0):
     # Создаём по всем текстам словарик с частотами
@@ -143,9 +144,6 @@ def word_freq_plot(dictionary,corpus, k2=100, k1=0):
     plt.xticks(indices, word, rotation='vertical',fontsize=12)
     plt.tight_layout()
     pass
-
-
-# In[25]:
 
 
 print('Размер словаря до фильтрации: {}'.format(len(dictionary)))
