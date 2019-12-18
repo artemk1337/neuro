@@ -3,10 +3,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import json
 import re
+import csv
 
 
 public_name = ['wgcsgo', 'leagueoflegends', 'fortnite', 'dota2', 'worldofwarcraft']
 hot_words = ['розыгр', 'выигр', 'получ', 'конкурс', 'разыгр', 'приз', 'услов', 'участ']
+hot_words_del = ['https', 'vk', 'com', ]
 
 
 def convert_text():
@@ -74,8 +76,7 @@ from keras import utils
 from keras.preprocessing.text import Tokenizer
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 
-# Utility
-import numpy as np
+
 import pickle
 import tempfile
 import os
@@ -84,22 +85,16 @@ import logging
 import multiprocessing
 from tqdm import tqdm
 
-
-
-
-
-import re
-import numpy as np
 import pandas as pd
 from pprint import pprint
-# Gensim
+
 import gensim
 import gensim.corpora as corpora
 from gensim.utils import simple_preprocess
 from gensim.models import CoherenceModel
-# spacy for lemmatization
+
 import spacy
-# Plotting tools
+
 import pyLDAvis
 import nltk
 from nltk.corpus import stopwords
@@ -109,7 +104,10 @@ import pymorphy2
 # from pymystem3 import Mystem
 
 
-data = np.load('data/wgcsgo/wgcsgo_all_repost.npy')
+Filename = 'wgcsgo'
+
+
+data = np.load(f'data/{Filename}/{Filename}_all_repost.npy')
 
 nltk.download('stopwords')
 nltk.download('wordnet')
@@ -119,7 +117,7 @@ stopwords_en = stopwords.words('english')
 
 x_train = [gensim.utils.simple_preprocess(text) for text in data]
 x_train = [x for x in x_train if len(x) > 100]
-print(x_train[0])
+
 
 # Работает ОЧЕНЬ МЕДЛЕННО!
 # lemm = Mystem()
@@ -132,7 +130,6 @@ x_train = [[morph.parse(word)[0].normal_form for word in i] for i in x_train]
 x_train = [[word for word in x if word not in stopwords_ru] for x in x_train]
 x_train = [[word for word in x if word not in stopwords_en] for x in x_train]
 
-print(x_train[0])
 
 # Build the bigram and trigram models
 bigram = gensim.models.Phrases(x_train, min_count=5, threshold=100)  # higher threshold fewer phrases.
@@ -152,22 +149,22 @@ def make_trigrams(texts):
 # Form Bigrams
 texts = make_bigrams(x_train)
 
-# Create Dictionary
+
 id2word = corpora.Dictionary(texts)
-# Create Corpus
 corpus = [id2word.doc2bow(text) for text in texts]
 
 # слово должно встретиться хотябы 5 раз и не более чем в 20% документов
-id2word.filter_extremes(no_below=5, no_above=0.2)
+id2word.filter_extremes(no_below=5, no_above=0.5)
 corpus = [id2word.doc2bow(text) for text in texts]
-print(len(id2word))
-print([id2word[i] for i in range(len(id2word))])
+
+# print(len(id2word))
+# print([id2word[i] for i in range(len(id2word))])
 
 
 lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus,
                                            id2word=id2word,
-                                           num_topics=10,
-                                           random_state=100,
+                                           num_topics=5,
+                                           random_state=50,
                                            update_every=1,
                                            chunksize=100,
                                            passes=10,
