@@ -104,10 +104,9 @@ import pyLDAvis
 import nltk
 from nltk.corpus import stopwords
 import pyLDAvis.gensim
-from pymystem3 import Mystem
 
-
-lemm = Mystem()
+import pymorphy2
+# from pymystem3 import Mystem
 
 
 data = np.load('data/wgcsgo/wgcsgo_all_repost.npy')
@@ -120,12 +119,20 @@ stopwords_en = stopwords.words('english')
 
 x_train = [gensim.utils.simple_preprocess(text) for text in data]
 x_train = [x for x in x_train if len(x) > 100]
+print(x_train[0])
+
+# Работает ОЧЕНЬ МЕДЛЕННО!
+# lemm = Mystem()
+# Работает шикарно!
+morph = pymorphy2.MorphAnalyzer()
+
+# Начальная форму
+x_train = [[morph.parse(word)[0].normal_form for word in i] for i in x_train]
+# Удаляю слова
 x_train = [[word for word in x if word not in stopwords_ru] for x in x_train]
 x_train = [[word for word in x if word not in stopwords_en] for x in x_train]
+
 print(x_train[0])
-x_train = [[lemm.lemmatize(word)[0] for word in i] for i in x_train[:2]]
-print(x_train[0])
-quit()
 
 # Build the bigram and trigram models
 bigram = gensim.models.Phrases(x_train, min_count=5, threshold=100)  # higher threshold fewer phrases.
