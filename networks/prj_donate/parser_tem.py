@@ -8,7 +8,6 @@ import operator
 
 token = '569e2f7f569e2f7f569e2f7f3056f08a7a5569e569e2f7f0b6739a62257254d2f209689'
 public_name = ['wgcsgo', 'leagueoflegends', 'fortnite', 'dota2', 'worldofwarcraft']
-public_name = ['leagueoflegends']
 
 
 session = vk.Session(access_token=token)  # Авторизация

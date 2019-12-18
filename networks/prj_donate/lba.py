@@ -116,7 +116,7 @@ stopwords_en = stopwords.words('english')
 
 
 x_train = [gensim.utils.simple_preprocess(text) for text in data]
-x_train = [x for x in x_train if len(x) > 100]
+x_train = [x for x in x_train if len(x) > 50]
 
 
 # Работает ОЧЕНЬ МЕДЛЕННО!
@@ -125,7 +125,7 @@ x_train = [x for x in x_train if len(x) > 100]
 morph = pymorphy2.MorphAnalyzer()
 
 # Начальная форму
-x_train = [[morph.parse(word)[0].normal_form for word in i] for i in x_train]
+# x_train = [[morph.parse(word)[0].normal_form for word in i] for i in x_train]
 # Удаляю слова
 x_train = [[word for word in x if word not in stopwords_ru] for x in x_train]
 x_train = [[word for word in x if word not in stopwords_en] for x in x_train]
@@ -153,9 +153,32 @@ texts = make_bigrams(x_train)
 id2word = corpora.Dictionary(texts)
 corpus = [id2word.doc2bow(text) for text in texts]
 
-# слово должно встретиться хотябы 5 раз и не более чем в 20% документов
-id2word.filter_extremes(no_below=5, no_above=0.5)
+# слово должно встретиться хотябы 5 раз и не более чем в 40% документов
+id2word.filter_extremes(no_below=10, no_above=0.4)
 corpus = [id2word.doc2bow(text) for text in texts]
+
+print(len(id2word))
+arr = np.array(len(id2word))
+print(arr.shape)
+for i in corpus:
+    for k in i:
+        print(int(k[0]))
+        arr[k[0]] += 1
+plt.plot(arr)
+plt.show()
+quit()
+
+print(corpus)
+quit()
+for i in id2word.items():
+    print(i)
+quit()
+# del_ids = [k for k,v in dictionary.items() if v=='b']
+
+id2word.filter_tokens(bad_ids=del_ids)
+
+corpus = [id2word.doc2bow(text) for text in texts]
+
 
 # print(len(id2word))
 # print([id2word[i] for i in range(len(id2word))])
@@ -164,7 +187,7 @@ corpus = [id2word.doc2bow(text) for text in texts]
 lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus,
                                            id2word=id2word,
                                            num_topics=5,
-                                           random_state=50,
+                                           random_state=100,
                                            update_every=1,
                                            chunksize=100,
                                            passes=10,
