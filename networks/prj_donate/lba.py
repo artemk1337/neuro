@@ -23,9 +23,9 @@ public_name = ['wgcsgo', 'leagueoflegends', 'fortnite', 'dota2', 'worldofwarcraf
 hot_words = ['розыгр', 'выигр', 'получ', 'конкурс', 'разыгр', 'приз', 'услов', 'участ']
 hot_words_del = ['https', 'vk', 'com', 'http', 'ru',
                  'https_vk', 'youtube', 'www', 'club', 'id']
-words_parazit = ['наш', 'ваш', 'её', 'свой', 'каждый', 'который', 'твой', 'cc']
+words_parazit = ['наш', 'ваш', 'её', 'свой', 'каждый', 'который', 'твой', 'cc', 'wall']
 
-type_w = 'repost'
+type_w = 'text'
 
 
 def convert_text():
@@ -254,10 +254,10 @@ def lda(Filename, tt, topics=10):
     np.save(f'data/top_words/{Filename}_top_words_{type_w}', topics)
 
 
-for i in public_name:
+"""for i in public_name:
     lda(i, 1, topics=7)
     pass
-
+"""
 lda('all', 0, topics=10)
 
 

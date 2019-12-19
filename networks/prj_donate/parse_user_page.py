@@ -16,8 +16,11 @@ vk_api = vk.API(session)
 
 
 for fn in public_name:
-    with open(f'data/{fn}.txt', 'r') as f:
-        data = f.readlines()
+    try:
+        with open(f'data/{fn}.txt', 'r') as f:
+            data = f.readlines()
+    except Exception:
+        print("can't open")
 
     arr = []
     for i in data:
@@ -56,8 +59,8 @@ for fn in public_name:
             pass
     with open(f'data/{fn}.json', 'w') as f:
         json.dump(final, f, separators=(',', ':'), indent=4)
-    print('<=== CHANGE TOKEN!!! ===>')
-    quit()
+    #print('<=== CHANGE TOKEN!!! ===>')
+    #quit()
 
 
 
