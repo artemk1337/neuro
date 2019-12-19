@@ -8,7 +8,7 @@ public_name = ['wgcsgo', 'leagueoflegends', 'fortnite', 'dota2', 'worldofwarcraf
 
 public_name = ['worldofwarcraft']
 
-token = '569e2f7f569e2f7f569e2f7f3056f08a7a5569e569e2f7f0b6739a62257254d2f209689'  # Сервисный ключ доступа
+token = '45708ab345708ab345708ab3c0451e2fb64457045708ab3188bf174880fe2406a7e83d6'  # Сервисный ключ доступа
 
 
 session = vk.Session(access_token=token)  # Авторизация

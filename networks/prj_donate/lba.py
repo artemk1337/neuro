@@ -254,10 +254,10 @@ def lda(Filename, tt, topics=10):
     np.save(f'data/top_words/{Filename}_top_words_{type_w}', topics)
 
 
-"""for i in public_name:
+for i in public_name:
     lda(i, 1, topics=7)
     pass
-"""
+
 lda('all', 0, topics=10)
 
 
