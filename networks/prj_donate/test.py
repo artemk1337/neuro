@@ -120,7 +120,7 @@ import itertools
 
 
 # Команда для строительства графика.
-def word_freq_plot(dictionary,corpus, k2=100, k1=0):
+def word_freq_plot(dictionary, corpus, k2=100, k1=0):
     # Создаём по всем текстам словарик с частотами
     total_word_count = defaultdict(int)
     for word_id, word_count in itertools.chain.from_iterable(corpus):
@@ -294,6 +294,7 @@ themes_names = {
 
 
 from wordcloud import WordCloud  # Пакет для построения облаков слов
+
 
 def getTopicWords(topic_number, lda_30_topics, scaling=10000):
     """

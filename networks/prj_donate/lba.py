@@ -8,7 +8,8 @@ import csv
 
 public_name = ['wgcsgo', 'leagueoflegends', 'fortnite', 'dota2', 'worldofwarcraft']
 hot_words = ['розыгр', 'выигр', 'получ', 'конкурс', 'разыгр', 'приз', 'услов', 'участ']
-hot_words_del = ['https', 'vk', 'com', ]
+hot_words_del = ['https', 'vk', 'com', 'http', 'ru',
+                 'https_vk', 'youtube', 'www', 'club', 'id']
 
 
 def convert_text():
@@ -59,6 +60,9 @@ def convert_text():
             # f.write(repost_new)
 
 
+"""convert text to 2D-array and save as numpy"""
+
+
 # convert_text()
 
 
@@ -76,24 +80,14 @@ from keras import utils
 from keras.preprocessing.text import Tokenizer
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 
-
 import pickle
-import tempfile
 import os
 import time
-import logging
-import multiprocessing
 from tqdm import tqdm
-
-import pandas as pd
-from pprint import pprint
 
 import gensim
 import gensim.corpora as corpora
 from gensim.utils import simple_preprocess
-from gensim.models import CoherenceModel
-
-import spacy
 
 import pyLDAvis
 import nltk
@@ -104,115 +98,180 @@ import pymorphy2
 # from pymystem3 import Mystem
 
 
-Filename = 'wgcsgo'
+def lda(Filename, tt):
+    if tt == 1:
+        data = np.load(f'data/{Filename}/{Filename}_all_repost.npy')
+    else:
+        arr = 0
+        for i in public_name:
+            data = np.load(f'data/{i}/{i}_all_repost.npy')
+            if arr == 0:
+                arr = data
+            else:
+                arr = np.concatenate((arr, data))
+        data = arr
+        np.save('data/all_repost')
+
+    nltk.download('stopwords')
+    nltk.download('wordnet')
+    stopwords_ru = stopwords.words('russian')
+    stopwords_en = stopwords.words('english')
+
+    x_train = [gensim.utils.simple_preprocess(text) for text in data]
+
+    # Количество слов
+    x_train = [x for x in x_train if len(x) > 50]
+
+    # Работает ОЧЕНЬ МЕДЛЕННО!
+    # lemm = Mystem()
+    # Работает шикарно!
+    morph = pymorphy2.MorphAnalyzer()
+
+    # Начальная форму
+    x_train = [[morph.parse(word)[0].normal_form for word in i] for i in x_train]
+
+    # Удаляю слова
+    x_train = [[word for word in x if word not in stopwords_ru] for x in x_train]
+    x_train = [[word for word in x if word not in stopwords_en] for x in x_train]
+
+    fin = []
+    for i in x_train:
+        arr = []
+        for k in i:
+            c = 0
+            for t in hot_words_del:
+                if re.search(t, k):
+                    c += 1
+            if c == 0:
+                arr.append(k)
+        fin.append(arr)
+
+    x_train = fin
+
+    """Join compound words (Example: cs_go or more)"""
+
+    """
+    # Build the bigram and trigram models
+    bigram = gensim.models.Phrases(x_train, min_count=5, threshold=100)  # higher threshold fewer phrases.
+    trigram = gensim.models.Phrases(bigram[x_train], threshold=100)
+    
+    # Faster way to get a sentence clubbed as a trigram/bigram
+    bigram_mod = gensim.models.phrases.Phraser(bigram)
+    trigram_mod = gensim.models.phrases.Phraser(trigram)
+    
+    def make_bigrams(texts):
+        return [bigram_mod[doc] for doc in texts]
+    def make_trigrams(texts):
+        return [trigram_mod[bigram_mod[doc]] for doc in texts]
+    """
+
+    # Form Bigrams
+    # texts = make_bigrams(x_train)
+    texts = x_train
+
+    """<=============CREATE DICT=============>"""
+
+    id2word = corpora.Dictionary(texts)
+    corpus = [id2word.doc2bow(text) for text in texts]
+
+    # слово должно встретиться хотябы 5 раз и не более чем в 50% документов
+    id2word.filter_extremes(no_below=5, no_above=0.5)
+    corpus = [id2word.doc2bow(text) for text in texts]
+
+    from collections import defaultdict
+    import itertools
+
+    def word_freq_plot(dictionary, corpus, k2=100, k1=0):
+        # Создаём по всем текстам словарик с частотами
+        total_word_count = defaultdict(int)
+        for word_id, word_count in itertools.chain.from_iterable(corpus):
+            total_word_count[dictionary.get(word_id)] += word_count
+
+        # Сортируем словарик по частотам
+        sorted_word_count = sorted(total_word_count.items(), key=lambda w: w[1], reverse=True)
+
+        # Делаем срез и по этому срезу строим картиночку
+        example_list = sorted_word_count[k1:k2]
+        word = []
+        frequency = []
+        for i in range(len(example_list)):
+            word.append(example_list[i][0])
+            frequency.append(example_list[i][1])
+
+        indices = np.arange(len(example_list))
+
+        plt.figure(figsize=(22, 10))
+        plt.bar(indices, frequency)
+        plt.xticks(indices, word, rotation='vertical', fontsize=12)
+        plt.tight_layout()
+        if tt == 1:
+            if not os.path.isdir(f'data/{Filename}/LDA'):
+                os.mkdir(f'data/{Filename}/LDA')
+            plt.savefig(f'data/{Filename}/LDA/most_popular_words.jpg')
+        else:
+            plt.savefig(f'data/most_popular_words.jpg')
+        plt.show()
+
+    word_freq_plot(id2word, corpus)
+
+    """Cut too popular words"""
+
+    '''
+    print(len(id2word))
+    arr = np.zeros((len(id2word)))
+    print(arr.shape)
+    for i in corpus:
+        for k in i:
+            print(int(k[0]))
+            arr[k[0]] += 1
+    
+    
+    plt.plot(arr)
+    plt.show()
+    
+    bad_id = np.array([x for x in arr if x > 100])
+    id2word.filter_tokens(bad_ids=bad_id)
+    corpus = [id2word.doc2bow(text) for text in texts]
+    '''
+
+    print(f'Posts - {len(texts)}')
+
+    lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus,
+                                               id2word=id2word,
+                                               num_topics=5)
+
+    if tt == 1:
+        if not os.path.isdir(f'data/{Filename}/LDA'):
+            os.mkdir(f'data/{Filename}/LDA')
+        lda_model.save(f'data/{Filename}/LDA/LDA_model')
+        # pyLDAvis.enable_notebook()  # Only in notebook
+        visualisation = pyLDAvis.gensim.prepare(lda_model, corpus, id2word)
+        pyLDAvis.save_html(visualisation, f'data/{Filename}/LDA/LDA_Visualization_{Filename}.html')
+    else:
+        lda_model.save(f'LDA_model')
+        # pyLDAvis.enable_notebook()  # Only in notebook
+        visualisation = pyLDAvis.gensim.prepare(lda_model, corpus, id2word)
+        pyLDAvis.save_html(visualisation, f'LDA_Visualization_.html')
+    print(lda_model.print_topics())
+
+    topics = lda_model.show_topics(num_topics=5, num_words=50, formatted=False)
+    print(topics)
+
+    words = []
+    for i in range(len(topics)):
+        tmp = []
+        for k in topics[i][1]:
+            tmp.append(k[0])
+        words.append(tmp)
 
 
-data = np.load(f'data/{Filename}/{Filename}_all_repost.npy')
+for i in public_name:
+    # lda(i, 1)
+    pass
 
-nltk.download('stopwords')
-nltk.download('wordnet')
-stopwords_ru = stopwords.words('russian')
-stopwords_en = stopwords.words('english')
-
-
-x_train = [gensim.utils.simple_preprocess(text) for text in data]
-x_train = [x for x in x_train if len(x) > 50]
+lda('aaa', 0)
 
 
-# Работает ОЧЕНЬ МЕДЛЕННО!
-# lemm = Mystem()
-# Работает шикарно!
-morph = pymorphy2.MorphAnalyzer()
-
-# Начальная форму
-# x_train = [[morph.parse(word)[0].normal_form for word in i] for i in x_train]
-# Удаляю слова
-x_train = [[word for word in x if word not in stopwords_ru] for x in x_train]
-x_train = [[word for word in x if word not in stopwords_en] for x in x_train]
-
-
-# Build the bigram and trigram models
-bigram = gensim.models.Phrases(x_train, min_count=5, threshold=100)  # higher threshold fewer phrases.
-trigram = gensim.models.Phrases(bigram[x_train], threshold=100)
-
-# Faster way to get a sentence clubbed as a trigram/bigram
-bigram_mod = gensim.models.phrases.Phraser(bigram)
-trigram_mod = gensim.models.phrases.Phraser(trigram)
-
-
-def make_bigrams(texts):
-    return [bigram_mod[doc] for doc in texts]
-def make_trigrams(texts):
-    return [trigram_mod[bigram_mod[doc]] for doc in texts]
-
-
-# Form Bigrams
-texts = make_bigrams(x_train)
-
-
-id2word = corpora.Dictionary(texts)
-corpus = [id2word.doc2bow(text) for text in texts]
-
-# слово должно встретиться хотябы 5 раз и не более чем в 40% документов
-id2word.filter_extremes(no_below=10, no_above=0.4)
-corpus = [id2word.doc2bow(text) for text in texts]
-
-print(len(id2word))
-arr = np.array(len(id2word))
-print(arr.shape)
-for i in corpus:
-    for k in i:
-        print(int(k[0]))
-        arr[k[0]] += 1
-plt.plot(arr)
-plt.show()
-quit()
-
-print(corpus)
-quit()
-for i in id2word.items():
-    print(i)
-quit()
-# del_ids = [k for k,v in dictionary.items() if v=='b']
-
-id2word.filter_tokens(bad_ids=del_ids)
-
-corpus = [id2word.doc2bow(text) for text in texts]
-
-
-# print(len(id2word))
-# print([id2word[i] for i in range(len(id2word))])
-
-
-lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus,
-                                           id2word=id2word,
-                                           num_topics=5,
-                                           random_state=100,
-                                           update_every=1,
-                                           chunksize=100,
-                                           passes=10,
-                                           alpha='auto',
-                                           per_word_topics=True)
-
-'''lda_model = models.ldamulticore.LdaMulticore(corpus=corpus,
-                                              id2word=id2word,
-                                              num_topics=10,
-                                              random_state=42,
-                                              passes=20)'''
-
-
-print(lda_model.print_topics())
-
-
-'''coherence_model_lda = CoherenceModel(model=lda_model, texts=texts, dictionary=id2word, coherence='c_v')
-coherence_lda = coherence_model_lda.get_coherence()
-print('\nCoherence Score: ', coherence_lda)'''
-
-# Visualize the topics
-# pyLDAvis.enable_notebook()  # Only in notebook
-# vis = pyLDAvis.gensim.prepare(lda_model, corpus, id2word)
-visualisation = pyLDAvis.gensim.prepare(lda_model, corpus, id2word)
-pyLDAvis.save_html(visualisation, 'LDA_Visualization.html')
 
 
 

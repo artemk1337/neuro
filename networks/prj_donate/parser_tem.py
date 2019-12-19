@@ -4,6 +4,9 @@ import numpy as np
 import vk
 import os
 import operator
+import matplotlib.pyplot as plt
+from scipy import ndimage
+from matplotlib import pyplot, transforms
 
 
 token = '569e2f7f569e2f7f569e2f7f3056f08a7a5569e569e2f7f0b6739a62257254d2f209689'
@@ -14,33 +17,8 @@ session = vk.Session(access_token=token)  # Авторизация
 vk_api = vk.API(session)
 
 
+# Собираем топики в отдельный файл
 def parse_topics():
-    def sort_dict(a):
-        d = {}
-        for i in range(1, 21):
-            d[a[i][0]] = a[i][1]
-        return d
-
-    def popTemGroup(fn):
-        with open(f'data/{fn}/{fn}_groups_topics.json', 'r') as f:
-            data = json.load(f)
-        arr = []
-        for i in data.keys():
-            for k in data[i]['sub']:
-                for t in k.keys():
-                    arr.append(t)
-        d = {}
-        for i in arr:
-            tmp = d.get(i, None)
-            if tmp is None:
-                d[i] = 1
-            else:
-                d[i] += 1
-        d_new = sorted(d.items(), key=operator.itemgetter(1), reverse=True)
-        d_new = sort_dict(d_new)
-        with open(f'data/{fn}/{fn}_pop_topic.json') as f:
-            json.dump(d_new, f, separators=(',', ':'), indent=4)
-
     for n in public_name:
         if not os.path.exists(f'data/{n}/{n}_groups_topics.json'):
             with open(f'data/{n}.json', 'r') as f:
@@ -65,9 +43,9 @@ def parse_topics():
                     with open(f'data/{n}/{n}_groups_topics.json', 'w') as f:
                         json.dump(user, f, separators=(',', ':'), indent=4)
             print(f'Saved {n}_groups_topics.json.json')
-        popTemGroup(n)
 
 
+# Собираем список самых популярных групп
 def popular_groups():
     def popGroup(file_name):
         top = {}
@@ -102,7 +80,35 @@ def popular_groups():
             json.dump(d, outfile, separators=(',', ':'), indent=4)
 
 
-parse_topics()
-# popular_groups()
+# Рисуем графики
+def plot_groups():
+    for fn in public_name:
+        with open(f'data/{fn}/{fn}_pop_groups.json') as f:
+            data = json.load(f)
+        info = vk_api.groups.getById(group_ids=[i for i in data.keys()], v=5.92)
+        names = []
+        subs = []
+        for i in range(len(info)):
+            names.append(info[i]['name'])
+        for i in data.keys():
+            subs.append(data[i])
+        subs = [x / max(subs) for x in subs]
 
+        fig = plt.figure(figsize=(8, 6))
+        ax = fig.add_subplot(111)
+        base = plt.gca().transData
+        rot = transforms.Affine2D().rotate_deg(-90)
+        ax.bar(range(len(names)), subs, transform=rot + base)
+        names.reverse()
+        plt.yticks(range(-19, 1), names)
+        plt.title(f'{fn}')
+        plt.subplots_adjust(left=0.4)
+        plt.savefig(f'data/{fn}/{fn}_groups.png')
+
+
+# Парсим топики групп у каждого подписчика
+# parse_topics()
+# Парсим популярные группы
+# popular_groups()
+plot_groups()
 

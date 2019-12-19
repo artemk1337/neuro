@@ -24,6 +24,8 @@ for i in range(len(arr)):
     y = arr[i]
     f = interp1d(x, y, kind='linear')
     y = f(x)
+    y = [x / max(y) for x in y]
+    y = [x * 100 for x in y]
     fig, ax = plt.subplots()
     ax.plot(x, y, color='r', linewidth=3)
     ax.xaxis.set_major_locator(ticker.MultipleLocator(2))
@@ -31,6 +33,7 @@ for i in range(len(arr)):
     ax.yaxis.set_major_locator(ticker.MultipleLocator(50))
     ax.yaxis.set_minor_locator(ticker.MultipleLocator(10))
     plt.xlim((14, 60))
+    plt.yticks([x for x in range(0, 100, 5)])
     plt.ylim(0)
     plt.xlabel('age')
     plt.title(f'{public_name[i]}')
