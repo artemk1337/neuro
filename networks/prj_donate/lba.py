@@ -23,7 +23,7 @@ public_name = ['wgcsgo', 'leagueoflegends', 'fortnite', 'dota2', 'worldofwarcraf
 hot_words = ['розыгр', 'выигр', 'получ', 'конкурс', 'разыгр', 'приз', 'услов', 'участ']
 hot_words_del = ['https', 'vk', 'com', 'http', 'ru',
                  'https_vk', 'youtube', 'www', 'club', 'id']
-words_parazit = ['наш', 'ваш', 'её', 'свой', 'каждый', 'который', 'твой']
+words_parazit = ['наш', 'ваш', 'её', 'свой', 'каждый', 'который', 'твой', 'cc']
 
 type_w = 'repost'
 
@@ -171,7 +171,7 @@ def lda(Filename, tt, topics=10):
     corpus = [id2word.doc2bow(text) for text in texts]
 
     # слово должно встретиться хотябы 10 раз и не более чем в 60% документов
-    id2word.filter_extremes(no_below=10, no_above=0.3)
+    id2word.filter_extremes(no_below=10, no_above=0.6)
     corpus = [id2word.doc2bow(text) for text in texts]
 
     from collections import defaultdict
