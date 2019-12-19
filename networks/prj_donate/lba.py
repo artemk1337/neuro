@@ -1,5 +1,18 @@
-from sklearn.feature_extraction.text import CountVectorizer
 import matplotlib.pyplot as plt
+import gensim
+import pickle
+import os
+import time
+import gensim
+import gensim.corpora as corpora
+from gensim.utils import simple_preprocess
+import pyLDAvis
+import nltk
+from nltk.corpus import stopwords
+import pyLDAvis.gensim
+import pymorphy2
+# from pymystem3 import Mystem
+
 import numpy as np
 import json
 import re
@@ -10,6 +23,9 @@ public_name = ['wgcsgo', 'leagueoflegends', 'fortnite', 'dota2', 'worldofwarcraf
 hot_words = ['розыгр', 'выигр', 'получ', 'конкурс', 'разыгр', 'приз', 'услов', 'участ']
 hot_words_del = ['https', 'vk', 'com', 'http', 'ru',
                  'https_vk', 'youtube', 'www', 'club', 'id']
+words_parazit = ['наш', 'ваш', 'её', 'свой', 'каждый', 'который', 'твой']
+
+type_w = 'repost'
 
 
 def convert_text():
@@ -55,62 +71,28 @@ def convert_text():
         for i in repost:
             if i != '':
                 repost_new.append(i)
-        np.save(f'data/{fn}/{fn}_all_repost', np.asarray(repost_new))
-        # with open(f'data/{fn}/{fn}_all_repost.txt', 'w', encoding='utf-8') as f:
+        np.save(f'data/{fn}/{fn}_all_text', np.asarray(repost_new))
+        # with open(f'data/{fn}/{fn}_all_text.txt', 'w', encoding='utf-8') as f:
             # f.write(repost_new)
 
 
-"""convert text to 2D-array and save as numpy"""
-
-
+"""convert text to array and save as numpy"""
 # convert_text()
 
 
-import gensim
-
-# Scikit learn
-from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
-
-# Keras
-from tensorflow import keras
-from keras.models import Sequential, load_model
-from keras.layers import Dense, Dropout, Embedding, LSTM
-from keras import utils
-from keras.preprocessing.text import Tokenizer
-from keras.callbacks import EarlyStopping, ReduceLROnPlateau
-
-import pickle
-import os
-import time
-from tqdm import tqdm
-
-import gensim
-import gensim.corpora as corpora
-from gensim.utils import simple_preprocess
-
-import pyLDAvis
-import nltk
-from nltk.corpus import stopwords
-import pyLDAvis.gensim
-
-import pymorphy2
-# from pymystem3 import Mystem
-
-
-def lda(Filename, tt):
+def lda(Filename, tt, topics=10):
     if tt == 1:
-        data = np.load(f'data/{Filename}/{Filename}_all_repost.npy')
+        data = np.load(f'data/{Filename}/{Filename}_all_{type_w}.npy')
     else:
         arr = 0
         for i in public_name:
-            data = np.load(f'data/{i}/{i}_all_repost.npy')
+            data = np.load(f'data/{i}/{i}_all_{type_w}.npy')
             if arr == 0:
                 arr = data
             else:
                 arr = np.concatenate((arr, data))
         data = arr
-        np.save('data/all_repost')
+        np.save(f'data/all_{type_w}', data)
 
     nltk.download('stopwords')
     nltk.download('wordnet')
@@ -127,12 +109,26 @@ def lda(Filename, tt):
     # Работает шикарно!
     morph = pymorphy2.MorphAnalyzer()
 
+    def pos(word, morth=pymorphy2.MorphAnalyzer()):
+        "Return a likely part of speech for the *word*."""
+        return morth.parse(word)[0].tag.POS
+
     # Начальная форму
     x_train = [[morph.parse(word)[0].normal_form for word in i] for i in x_train]
+    # https://pymorphy2.readthedocs.io/en/latest/user/grammemes.html
+    # Удалить определенные части речи
+    functors_pos = {'INTJ', 'PRCL', 'CONJ', 'PREP',
+                    'COMP',
+                    'ADVB',
+                    'NPRO',
+                    'VERB', 'INFN',
+                    'ADJF', 'ADJS'}
+    x_train = [[word for word in words if pos(word) not in functors_pos] for words in x_train]
 
     # Удаляю слова
     x_train = [[word for word in x if word not in stopwords_ru] for x in x_train]
     x_train = [[word for word in x if word not in stopwords_en] for x in x_train]
+    x_train = [[word for word in x if word not in words_parazit] for x in x_train]
 
     fin = []
     for i in x_train:
@@ -174,8 +170,8 @@ def lda(Filename, tt):
     id2word = corpora.Dictionary(texts)
     corpus = [id2word.doc2bow(text) for text in texts]
 
-    # слово должно встретиться хотябы 5 раз и не более чем в 50% документов
-    id2word.filter_extremes(no_below=5, no_above=0.5)
+    # слово должно встретиться хотябы 10 раз и не более чем в 60% документов
+    id2word.filter_extremes(no_below=10, no_above=0.3)
     corpus = [id2word.doc2bow(text) for text in texts]
 
     from collections import defaultdict
@@ -207,10 +203,10 @@ def lda(Filename, tt):
         if tt == 1:
             if not os.path.isdir(f'data/{Filename}/LDA'):
                 os.mkdir(f'data/{Filename}/LDA')
-            plt.savefig(f'data/{Filename}/LDA/most_popular_words.jpg')
+            plt.savefig(f'data/{Filename}/LDA/most_popular_words_{type_w}.jpg')
         else:
-            plt.savefig(f'data/most_popular_words.jpg')
-        plt.show()
+            plt.savefig(f'data/most_popular_words_{type_w}.jpg')
+        # plt.show()
 
     word_freq_plot(id2word, corpus)
 
@@ -225,7 +221,6 @@ def lda(Filename, tt):
             print(int(k[0]))
             arr[k[0]] += 1
     
-    
     plt.plot(arr)
     plt.show()
     
@@ -238,7 +233,7 @@ def lda(Filename, tt):
 
     lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus,
                                                id2word=id2word,
-                                               num_topics=5)
+                                               num_topics=topics)
 
     if tt == 1:
         if not os.path.isdir(f'data/{Filename}/LDA'):
@@ -246,32 +241,23 @@ def lda(Filename, tt):
         lda_model.save(f'data/{Filename}/LDA/LDA_model')
         # pyLDAvis.enable_notebook()  # Only in notebook
         visualisation = pyLDAvis.gensim.prepare(lda_model, corpus, id2word)
-        pyLDAvis.save_html(visualisation, f'data/{Filename}/LDA/LDA_Visualization_{Filename}.html')
+        pyLDAvis.save_html(visualisation, f'data/{Filename}/LDA/LDA_Visualization_{Filename}_{type_w}.html')
     else:
         lda_model.save(f'LDA_model')
         # pyLDAvis.enable_notebook()  # Only in notebook
         visualisation = pyLDAvis.gensim.prepare(lda_model, corpus, id2word)
-        pyLDAvis.save_html(visualisation, f'LDA_Visualization_.html')
-    print(lda_model.print_topics())
+        pyLDAvis.save_html(visualisation, f'LDA_Visualization_{type_w}.html')
+    # print(lda_model.print_topics())
 
     topics = lda_model.show_topics(num_topics=5, num_words=50, formatted=False)
     print(topics)
-
-    words = []
-    for i in range(len(topics)):
-        tmp = []
-        for k in topics[i][1]:
-            tmp.append(k[0])
-        words.append(tmp)
+    np.save(f'data/top_words/{Filename}_top_words_{type_w}', topics)
 
 
 for i in public_name:
-    # lda(i, 1)
+    lda(i, 1, topics=7)
     pass
 
-lda('aaa', 0)
-
-
-
+lda('all', 0, topics=10)
 
 
