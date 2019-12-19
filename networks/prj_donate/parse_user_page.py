@@ -34,7 +34,7 @@ for fn in public_name:
     if os.path.exists(f'data/{fn}.json'):
         with open(f'data/{fn}.json') as f:
             final = json.load(f)
-    for i in range(650, len(arr)):
+    for i in range(len(arr)):
         id = arr[i]
         max_persons = 1000
         try:
