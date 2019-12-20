@@ -36,13 +36,6 @@ def sort(data):
     return sorted_topic
 
 
-# Сохранение
-
-def save(file_name, data):
-    with open(file_name, 'w') as file:
-        json.dump(data, file, separators=(',', ':'), indent=4)
-
-
 # Отрисовка
 
 def params(length):
@@ -73,25 +66,20 @@ def plotter(file_name, data):
 
     # Top 5
     for key, item in data.items():
-        if len(labels) >= 5:
+        if len(labels) >= 10:
             break
         labels.append(key)
         items.append(item)
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(6, 3))
     wedges, texts, autotexts = ax.pie(items, autopct='%1.1f%%', textprops=dict(color="w"))
     ax.legend(wedges, labels,
-              title="Topics",
-              loc='upper left',
-              bbox_to_anchor=(-0.3, 1))
-          # loc="center left",
-          # bbox_to_anchor=(1, 0, 0.5, 1))
-    plt.title(f'{file_name.split("/")[1]}')
+          title="Topics",
+          loc="center left",
+          bbox_to_anchor=(1, 0, 0.5, 1))
     plt.savefig(file_name)
     return True
 
-
-# Сборщик
 
 def popTopic(file_name):
     with open(file_name) as file:
@@ -105,17 +93,11 @@ def popTopic(file_name):
             return None
 
 
-if __name__ == '__main__':
-    files = ['dota2', 'wgcsgo', 'worldofwarcraft', 'fortnite', 'leagueoflegends']
-    prefix = 'data/'
-    postfix = '_groups_topics.json'
-    postfix_save = '_popular_topics.json'
+files = ['hsemem', 'msuofmems']
+postfix = '_groups_topics.json'
 
-    for file in files:
-        path = '{}{}/{}{}'.format(prefix, file, file, postfix)
-        topics = popTopic(path)
-        plotter('data/{}/{}_topics.jpg'.format(file, file), topics)
-
-        if topics is not None:
-            save_path = '{}{}/{}{}'.format(prefix, file, file, postfix_save)
-            save(save_path, topics)
+for file in files:
+    topics = popTopic(f'data/{file}/{file}{postfix}')
+    plotter(f'data/{file}/{file}_topics.jpg', topics)
+    with open(f'data/{file}/{file}_popular_topics.json', 'w') as file:
+        json.dump(topics, file)

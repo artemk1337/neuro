@@ -2,7 +2,7 @@ import json
 import matplotlib.pyplot as plt
 
 
-public_name = ['wgcsgo', 'leagueoflegends', 'fortnite', 'dota2', 'worldofwarcraft']
+public_name = ['hsemem', 'msuofmems']
 
 
 man = 0

@@ -4,9 +4,18 @@ __pycache__/
 *$py.class
 
 # My projects
-networks/verif_faces/data/
 networks/*.zip
 networks/*/data
+networks/*/*/data
+networks/*/*/*/data
+networks/*/*/*/*/data
+networks/*/*/*/*/*/data
+networks/*/*/*/*/*/*/data
+networks/*/*/*/*/*/*/*/data
+networks/*/*/*/*/*/*/*/*/data
+networks/*/*/*/*/*/*/*/*/*/data
+networks/*/*/*/*/*/*/*/*/*/*/data
+networks/*/*/*/*/*/*/*/*/*/*/*/data
 
 
 # C extensions
