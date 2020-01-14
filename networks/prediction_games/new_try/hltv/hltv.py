@@ -82,13 +82,22 @@ def get_team_info(teamid):
     page = get_parsed_page("http://www.hltv.org/?pageid=179&teamid=" + str(teamid))
 
     team_info = {}
-    team_info['team-name']=page.find("div", {"class": "context-item"}).text.encode('utf8')
+    team_info['team-name']=page.find("div", {"class": "context-item"}).text.encode('utf8').decode('utf8')
+    # print(team_info['team-name'])
 
     current_lineup = _get_current_lineup(page.find_all("div", {"class": "col teammate"}))
     team_info['current-lineup'] = current_lineup
+    # print(team_info['current-lineup'])
 
     historical_players = _get_historical_lineup(page.find_all("div", {"class": "col teammate"}))
     team_info['historical-players'] = historical_players
+    for i in team_info['historical-players']:
+        for k in i:
+            try:
+                i[k] = i[k].decode('utf-8')
+            except:
+                pass
+    # print(team_info['historical-players'])
 
     team_stats_columns = page.find_all("div", {"class": "columns"})
     team_stats = {}
@@ -99,9 +108,12 @@ def get_team_info(teamid):
         for stat in stats:
             stat_value = stat.find("div", {"class": "large-strong"}).text.encode('utf8')
             stat_title = stat.find("div", {"class": "small-label-below"}).text.encode('utf8')
-            team_stats[stat_title] = stat_value
+            team_stats[stat_title.decode('utf-8')] = stat_value
 
     team_info['stats'] = team_stats
+    for i in team_info['stats']:
+        team_info['stats'][i] = team_info['stats'][i].decode('utf-8')
+    print(team_info['stats'])
 
     return team_info
 
@@ -166,8 +178,8 @@ def get_matches():
             if (getMatch.find_all("td", {"class": "team-cell"})):
                 matchObj['team1'] = getMatch.find_all("td", {"class": "team-cell"})[0].text.encode('utf8').lstrip().rstrip()
                 matchObj['team2'] = getMatch.find_all("td", {"class": "team-cell"})[1].text.encode('utf8').lstrip().rstrip()
-                matchObj['id1'] = str(getMatch.find_all("td", {"class": "team-cell"})[0].find_all("div", {"class": "line-align"})[0].find_all("img")[0]).split("src=")[1].split()[0].split('/')[-1]
-                matchObj['id2'] = str(getMatch.find_all("td", {"class": "team-cell"})[1].find_all("div", {"class": "line-align"})[0].find_all("img")[0]).split("src=")[1].split()[0].split('/')[-1]
+                matchObj['id1'] = int(str(getMatch.find_all("td", {"class": "team-cell"})[0].find_all("div", {"class": "line-align"})[0].find_all("img")[0]).split("src=")[1].split()[0].split('/')[-1].split('"')[0])
+                matchObj['id2'] = int(str(getMatch.find_all("td", {"class": "team-cell"})[1].find_all("div", {"class": "line-align"})[0].find_all("img")[0]).split("src=")[1].split()[0].split('/')[-1].split('"')[0])
             else:
                 matchObj['team1'] = None
                 matchObj['team2'] = None

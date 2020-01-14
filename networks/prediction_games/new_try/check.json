@@ -1,0 +1,171 @@
+{
+    "team-name": "Chaos",
+    "current-lineup": [
+        {
+            "country": "Canada",
+            "name": "Joshua Nissan",
+            "nickname": "steel",
+            "maps-played": 20
+        },
+        {
+            "country": "United Kingdom",
+            "name": "Owen Butterfield",
+            "nickname": "smooya",
+            "maps-played": 4
+        },
+        {
+            "country": "United States",
+            "name": "Cameron Kern",
+            "nickname": "cam",
+            "maps-played": 20
+        },
+        {
+            "country": "United States",
+            "name": "Ben Smith",
+            "nickname": "ben1337",
+            "maps-played": 20
+        },
+        {
+            "country": "Russia",
+            "name": "Maxim Shepelev",
+            "nickname": "wippie",
+            "maps-played": 18
+        }
+    ],
+    "historical-players": [
+        {
+            "country": "Sweden",
+            "name": "Niclas Plessen",
+            "nickname": "PlesseN",
+            "maps-played": 281
+        },
+        {
+            "country": "Sweden",
+            "name": "Mikail Bill",
+            "nickname": "Maikelele",
+            "maps-played": 53
+        },
+        {
+            "country": "United States",
+            "name": "Gage Green",
+            "nickname": "Infinite",
+            "maps-played": 10
+        },
+        {
+            "country": "Sweden",
+            "name": "Daniel Narancic",
+            "nickname": "djL",
+            "maps-played": 222
+        },
+        {
+            "country": "Sweden",
+            "name": "Linus Andersson",
+            "nickname": "B\u00e5\u00e5ten",
+            "maps-played": 137
+        },
+        {
+            "country": "Sweden",
+            "name": "Mattias Rosback",
+            "nickname": "benny",
+            "maps-played": 21
+        },
+        {
+            "country": "Sweden",
+            "name": "Jacob Mouruj\u00e4rvi",
+            "nickname": "pyth",
+            "maps-played": 21
+        },
+        {
+            "country": "Sweden",
+            "name": "Markus Wallsten",
+            "nickname": "pronax",
+            "maps-played": 50
+        },
+        {
+            "country": "Sweden",
+            "name": "Aleksandar Zarkovic",
+            "nickname": "jayzaR",
+            "maps-played": 21
+        },
+        {
+            "country": "Sweden",
+            "name": "Denis Gutaj",
+            "nickname": "grux",
+            "maps-played": 18
+        },
+        {
+            "country": "Sweden",
+            "name": "Jakob \u00c5berg",
+            "nickname": "minio",
+            "maps-played": 56
+        },
+        {
+            "country": "Sweden",
+            "name": "Fredrik Gustafsson",
+            "nickname": "FREDDyFROG",
+            "maps-played": 286
+        },
+        {
+            "country": "Sweden",
+            "name": "Joakim Gustafsson",
+            "nickname": "Relaxa",
+            "maps-played": 286
+        },
+        {
+            "country": "Sweden",
+            "name": "Jonatan Lundberg",
+            "nickname": "Devilwalk",
+            "maps-played": 8
+        },
+        {
+            "country": "Sweden",
+            "name": "Alfred Karlsson",
+            "nickname": "RuStY",
+            "maps-played": 25
+        },
+        {
+            "country": "Sweden",
+            "name": "Hugo Hallgren",
+            "nickname": "HugoXD",
+            "maps-played": 1
+        },
+        {
+            "country": "Sweden",
+            "name": "Joakim Gidetun",
+            "nickname": "disco doplan",
+            "maps-played": 3
+        },
+        {
+            "country": "Sweden",
+            "name": "Fredrik Bu\u00f6",
+            "nickname": "freddieb",
+            "maps-played": 5
+        },
+        {
+            "country": "Sweden",
+            "name": "Simon Feldt",
+            "nickname": "tabz",
+            "maps-played": 34
+        },
+        {
+            "country": "Sweden",
+            "name": "Rasmus Johansson",
+            "nickname": "kreaz",
+            "maps-played": 9
+        },
+        {
+            "country": "United States",
+            "name": "Alan Hardeman",
+            "nickname": "Shakezullah",
+            "maps-played": 9
+        }
+    ],
+    "stats": {
+        "Maps played": "327",
+        "Wins / draws / losses": "169 / 0 / 158",
+        "Total kills": "29131",
+        "Total deaths": "28491",
+        "Rounds played": "8680",
+        "K/D Ratio": "1.02"
+    }
+}
