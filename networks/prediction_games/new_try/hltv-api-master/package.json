@@ -1,0 +1,80 @@
+{
+  "name": "hltv-api",
+  "version": "1.5.0",
+  "description": "API from Hltv.org",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "scripts": {
+    "report-coverage": "cat ./coverage/lcov.info | codecov",
+    "cover": "jest --coverage",
+    "lint": "eslint --ext js,ts,tsx ./src",
+    "pretest": "npm run lint",
+    "test": "jest",
+    "test:w": "yarn test --watch",
+    "prebuild": "rimraf dist",
+    "build": "tsc -p .",
+    "build:w": "tsc -p . -w",
+    "semantic-release": "semantic-release",
+    "travis-deploy-once": "travis-deploy-once"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dajk/hltv-api.git"
+  },
+  "keywords": [
+    "Hltv.org",
+    "API"
+  ],
+  "author": "Radovan Hajdukovic <hajdukovic.radovan@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dajk/hltv-api/issues"
+  },
+  "homepage": "https://github.com/dajk/hltv-api#readme",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.3",
+    "request": "^2.88.0",
+    "xml2js": "^0.4.19"
+  },
+  "devDependencies": {
+    "@types/cheerio": "^0.22.11",
+    "@types/jest": "^24.0.12",
+    "@types/node": "10.14.6",
+    "@types/request": "^2.48.1",
+    "@types/xml2js": "^0.4.4",
+    "@typescript-eslint/eslint-plugin": "^1.7.0",
+    "@typescript-eslint/parser": "^1.7.0",
+    "codecov": "^3.3.0",
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-config-prettier": "^4.2.0",
+    "eslint-plugin-import": "^2.17.2",
+    "eslint-plugin-prettier": "^3.0.1",
+    "husky": "^2.1.0",
+    "jest": "^24.7.1",
+    "lint-staged": "^8.1.5",
+    "prettier": "^1.17.0",
+    "rimraf": "^2.6.3",
+    "ts-jest": "^24.0.2",
+    "ts-node": "^8.1.0",
+    "typescript": "^3.4.5"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,ts,tsx}": [
+      "eslint --fix",
+      "git add"
+    ]
+  }
+}
