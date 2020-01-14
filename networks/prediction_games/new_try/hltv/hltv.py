@@ -91,6 +91,7 @@ def get_team_info(teamid):
 
     historical_players = _get_historical_lineup(page.find_all("div", {"class": "col teammate"}))
     team_info['historical-players'] = historical_players
+
     for i in team_info['historical-players']:
         for k in i:
             try:
@@ -108,12 +109,14 @@ def get_team_info(teamid):
         for stat in stats:
             stat_value = stat.find("div", {"class": "large-strong"}).text.encode('utf8')
             stat_title = stat.find("div", {"class": "small-label-below"}).text.encode('utf8')
+
             team_stats[stat_title.decode('utf-8')] = stat_value
 
     team_info['stats'] = team_stats
+
     for i in team_info['stats']:
         team_info['stats'][i] = team_info['stats'][i].decode('utf-8')
-    print(team_info['stats'])
+    # print(team_info['stats'])
 
     return team_info
 
@@ -273,6 +276,15 @@ def get_results_by_date(start_date, end_date):
             break
 
     return results_list
+
+
+# In progress
+def get_analitics(matchurl):
+    page = get_parsed_page(matchurl)
+    pass
+
+
+print(get_analitics("https://www.hltv.org/betting/analytics/2338956/renegades-vs-order-iem-katowice-2020-oceania-closed-qualifier"))
 
 
 if __name__ == "__main__":
