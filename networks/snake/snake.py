@@ -1,5 +1,6 @@
 from tkinter import Tk, Canvas
 import random
+from neuro import *
 
 # Globals
 WIDTH = 800
@@ -25,6 +26,7 @@ def create_block():
                           posx+SEG_SIZE, posy+SEG_SIZE,
                           fill="red")
     # print(posx, posy)
+    return posx, posy
 
 
 def main():
@@ -33,12 +35,7 @@ def main():
     if IN_GAME:
         s.move()
         head_coords = c.coords(s.segments[-1].instance)
-        for i in s.segments:
-            print(c.coords(i.instance))
-
         x1, y1, x2, y2 = head_coords  # Coordinates of snake's head
-        print(head_coords)
-        quit()
         # Check for collision with gamefield edges
         if x2 > WIDTH or x1 < 0 or y1 < 0 or y2 > HEIGHT:
             IN_GAME = False
@@ -48,7 +45,8 @@ def main():
             print('eat')
             s.add_segment()
             c.delete(BLOCK)
-            create_block()
+            X, Y = create_block()
+            press(x1, y1, X, Y)
         # Self-eating
         else:
             for index in range(len(s.segments)-1):
