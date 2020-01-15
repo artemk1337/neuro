@@ -1,7 +1,8 @@
 # Info
+## Recommend to use bw
 
 download.py - download data from internet <br />
-create_pares / _bw.py - create parse of photos <br />
+create_pares / _bw.py - create pares of photos <br />
 neuro / _bw.py - siamese network
 
 # Accuracy with known photos - 96-99%
