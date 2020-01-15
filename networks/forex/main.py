@@ -5,6 +5,7 @@ import os
 import matplotlib.pyplot as plt
 from keras.models import Sequential
 from keras import layers
+from keras.callbacks import ModelCheckpoint, TerminateOnNaN, ReduceLROnPlateau
 
 
 def load_data(fn):
@@ -69,9 +70,21 @@ def create_model(x, y, x1, y1, x2, y2):
     # model.add(layers.LSTM(input_dim=5000, output_dim=32, return_sequences=True))
     model.add(layers.Dense(32, input_dim=5000, activation='relu'))
     model.add(layers.Dense(1))
+    checkpoint = ModelCheckpoint('weights.hdf5',
+                                 monitor='val_mse',
+                                 verbose=1,
+                                 save_best_only=True)
     model.compile(optimizer='adam', loss='mse', metrics=['mse'])
-    history = model.fit(x, y, batch_size=32, epochs=300, validation_data=[x1, y1])
-    print(model.evaluate(x2, y2))
+    history = model.fit(x, y, batch_size=32, epochs=500,
+                        callbacks=[checkpoint,
+                                   TerminateOnNaN(),
+                                   ReduceLROnPlateau(monitor='val_loss',
+                                                     factor=0.5,
+                                                     patience=50)],
+                        validation_data=[x1, y1])
+    tmp = model.evaluate(x2, y2)
+    print(tmp)
+    model.save(f'model_{tmp[0]}.h5')
 
 
 def ploting():
