@@ -118,11 +118,13 @@ arr, y = load()
 print(y.shape)
 print(arr.shape)
 
+
 print(f'Samples - {arr.shape[0]}')
+
 
 y_pred = model.predict([arr[:, 0], arr[:, 1]])
 tr_acc = compute_false_false(y, y_pred)
-print('* False -> False (like precision): %0.2f%%' % (100 * tr_acc))
+print('* False -> False (a little like precision): %0.2f%%' % (100 * tr_acc))
 
 y_pred = model.predict([arr[:, 0], arr[:, 1]])
 tr_acc = compute_accuracy(y, y_pred)
