@@ -4,7 +4,7 @@ import csv
 import time
 import matplotlib.pyplot as plt
 from scipy import optimize
-from sklearn.tree import DecisionTreeRegressor
+# from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -83,6 +83,7 @@ class Neuro(object):
         # print(y_te)
         # print(seq.predict(x_te).reshape(y_te.shape[0]))
         print(np.mean(np.abs(y_te - seq.predict(x_te).reshape(y_te.shape[0]))).astype('float32'), '- mae loss')
+        print(np.std(y_te - seq.predict(x_te).reshape(y_te.shape[0])).astype('float32'), '- std loss')
 
     def fit(self, x_tr, x_te, y_tr, y_te):
         if not os.path.exists('data_for_neuro/model_best'):
@@ -112,9 +113,13 @@ class TR(object):
         self.max_depth = max_depth
 
     def fit(self, x, y):
-        # Create first level
-        self.start = TR()
-        self.start.max_depth = self.max_depth
+        """
+        :param x:
+            X - array
+        :param y:
+            Y - array
+        """
+        self.start = TR(self.max_depth)
         self.start._grow_tree_(x, y)
 
     def predict(self, x):
@@ -143,7 +148,7 @@ class TR(object):
         # Stop-factor
         """ For classification: len(np.unique(y)) <= 1  -  1 class in top
         For regression: y <= 5 or more  -  5 or more the nearest classes in top """
-        if len(np.unique(y)) <= 5 or self.depth >= self.max_depth:
+        if len(np.unique(y)) <= 10 or self.depth >= self.max_depth:
             return
         # man - https://spark.apache.org/docs/2.2.0/mllib-decision-tree.html
         self._optimizer_(x, y)
@@ -157,35 +162,37 @@ class TR(object):
     # Find best splitter
     def _optimizer_(self, x, y):
         best_ft, best_th, best_gain = self.ft, self.threshold, self.gain
-        for input_col in range(x.shape[1]):
-            # More correctly, mae like in sklearn, works VERY slow
+        for col in range(x.shape[1]):
+            # Mae like in sklearn, works VERY slow
             """# Sort classes
-            feature_level = np.unique(x[:, input_col])
+            feature_level = np.unique(x[:, col])
             # Average between neighbors
             th = (feature_level[:-1] + feature_level[1:]) / 2
             for i in th:
                 # Index 0 - left, 1 - right
-                y_ = [y[x[:, input_col] <= i], y[x[:, input_col] > i]]
+                y_ = [y[x[:, col] <= i], y[x[:, col] > i]]
                 new = [self._loss_mse_(y_[0]), self._loss_mse_(y_[1])]
-                n_ = [float(y_[0].shape[0]) / self.samples, float(y_[1].shape[0]) / self.samples]
-                new_gain = n_[0] * new[0] + n_[1] * new[1]
+                k = [float(y_[0].shape[0]) / self.samples, float(y_[1].shape[0]) / self.samples]
+                new_gain = k[0] * new[0] + k[1] * new[1]
                 if new_gain < best_gain:
-                    best_gain, best_ft, best_th = new_gain, input_col, i"""
-            # Scipy, loss good, works slow
-            feature_level = np.unique(x[:, input_col])
-            res = optimize.minimize_scalar(self._minimize_scalar_, args=(input_col, x, y), bounds=(feature_level[1], feature_level[-1]), method='Bounded')
-            value = res.x
-            new_gain = res.fun
-            if new_gain < best_gain:
-                best_gain, best_ft, best_th = new_gain, input_col, value
+                    best_gain, best_ft, best_th = new_gain, col, i"""
+            # loss good, works slow, correct!
+            feature_level = np.unique(x[:, col])
+            res = optimize.minimize_scalar(self._minimize_scalar_,
+                                           args=(col, x, y),
+                                           bounds=(feature_level[1],
+                                                   feature_level[-1]),
+                                           method='Bounded')
+            if res.fun < best_gain:
+                best_gain, best_ft, best_th = res.fun, col, res.x
             # Mean digit, works fast and better!!!
-            '''i = np.mean(x[:, input_col])
-            y_ = [y[x[:, input_col] <= i], y[x[:, input_col] > i]]
+            '''i = np.mean(x[:, col])
+            y_ = [y[x[:, col] <= i], y[x[:, col] > i]]
             new = [self._loss_mse_(y_[0]), self._loss_mse_(y_[1])]
-            n_ = [float(y_[0].shape[0]) / self.samples, float(y_[1].shape[0]) / self.samples]
-            new_gain = n_[0] * new[0] + n_[1] * new[1]
+            k = [float(y_[0].shape[0]) / self.samples, float(y_[1].shape[0]) / self.samples]
+            new_gain = k[0] * new[0] + k[1] * new[1]
             if new_gain < best_gain:
-                best_gain, best_ft, best_th = new_gain, input_col, i'''
+                best_gain, best_ft, best_th = new_gain, col, i'''
         self.ft = best_ft
         self.gain = best_gain
         self.threshold = best_th
@@ -194,9 +201,8 @@ class TR(object):
     def _minimize_scalar_(self, value, feature, x, y):
         y_ = [y[x[:, feature] <= value], y[x[:, feature] > value]]
         new = [self._loss_mse_(y_[0]), self._loss_mse_(y_[1])]
-        n_ = [float(y_[0].shape[0]) / self.samples, float(y_[1].shape[0]) / self.samples]
-        new_gain = n_[0] * new[0] + n_[1] * new[1]
-        return new_gain
+        k = [float(y_[0].shape[0]) / self.samples, float(y_[1].shape[0]) / self.samples]
+        return k[0] * new[0] + k[1] * new[1]
 
     def _loss_mse_(self, y):
         return np.mean((y - np.mean(y)) ** 2)
@@ -243,6 +249,7 @@ if __name__ == "__main__":
     rgf.fit(x_tr, y_tr)
     print('<=====PREDICTION=====>')
     print((np.mean(np.abs(y_te - rgf.predict(x_te)))).astype('float32'), '- mae loss')  # mae loss
+    print(np.std(y_te - rgf.predict(x_te)), '- std loss')  # std loss
     print('<=====TIME=====>')
     print(time.time() - tm, 'sec')
     # print('<=====TREE=====>')
