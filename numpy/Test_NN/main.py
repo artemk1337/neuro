@@ -1,4 +1,5 @@
-
+from math import exp
+import numpy as np
 
 
 def sigmoid(x):
@@ -7,6 +8,14 @@ def sigmoid(x):
 
 def sigmoid_derivative(x):
     return (exp(-x)) / ((1 + exp(-x)) ** 2)
+
+
+def relu(x):
+    return np.maximum(x, 0)
+
+
+def relu_derivative(x):
+    return np.where(x <= 0, 0, 1)
 
 
 class NeuralNetwork:
@@ -34,6 +43,9 @@ class NeuralNetwork:
         # update the weights with the derivative (slope) of the loss function
         self.weights1 += d_weights1
         self.weights2 += d_weights2
+
+
+
 
 
 
