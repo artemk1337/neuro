@@ -15,49 +15,8 @@ import tensorflow as tf
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, BaggingRegressor
 
 
-def f1(y_true, y_pred):
-    def recall(y_true, y_pred):
-        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-        possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-        recall = true_positives / (possible_positives + K.epsilon())
-        return recall
-
-    def precision(y_true, y_pred):
-        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-        predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-        precision = true_positives / (predicted_positives + K.epsilon())
-        return precision
-    precision = precision(y_true, y_pred)
-    recall = recall(y_true, y_pred)
-    return 2*((precision*recall)/(precision+recall+K.epsilon()))
-
-
-def roc_auc_score(y_true, y_pred):
-    """ ROC AUC Score.
-    Approximates the Area Under Curve score, using approximation based on
-    the Wilcoxon-Mann-Whitney U statistic.
-    Yan, L., Dodier, R., Mozer, M. C., & Wolniewicz, R. (2003).
-    Optimizing Classifier Performance via an Approximation to the Wilcoxon-Mann-Whitney Statistic.
-    Measures overall performance for a full range of threshold levels.
-    Arguments:
-        y_pred: `Tensor`. Predicted values.
-        y_true: `Tensor` . Targets (labels), a probability distribution.
-    """
-    with tf.name_scope("RocAucScore"):
-        pos = tf.boolean_mask(y_pred, tf.cast(y_true, tf.bool))
-        neg = tf.boolean_mask(y_pred, ~tf.cast(y_true, tf.bool))
-        pos = tf.expand_dims(pos, 0)
-        neg = tf.expand_dims(neg, 1)
-        # original paper suggests performance is robust to exact parameter choice
-        gamma = 0.2
-        p = 3
-        difference = tf.zeros_like(pos * neg) + pos - neg - gamma
-        masked = tf.boolean_mask(difference, difference < 0.0)
-    return tf.reduce_sum(tf.pow(-masked, p))
-
-
 batch_size = 128
-metr = 'acc'  # f1, roc_auc_score
+metr = 'acc'  # f1, AUC
 metr = roc_auc_score
 
 
@@ -98,6 +57,45 @@ seq.add(Dropout(0.25))
 seq.add(Dense(4, activation='relu'))
 seq.add(Dropout(0.25))
 seq.add(Dense(1, activation='sigmoid'))"""
+
+
+
+
+
+class NeuralNetwork:
+    def ___init__(self, x, y):
+        self.input = x
+        self.weights1 = np.random.rand(self.input.shape[1], 4)
+        self.weights2 = np.random.rand(4, 1)
+        self.y = y
+        self.output = np.zeros(self.y.shape)
+
+    def feedforward(self):
+        self.layer1 = sigmoid(np.dot(self.input, self.weights1))
+        self.output = sigmoid(np.dot(self.layer1, self.weights2))
+
+    def backprop(self):
+        # application of the chain rule to find derivative of the loss function with respect to weights2 and weightsl
+        d_weights2 = np.dot(self.layerl.T,
+                            (2 * (self.y - self.output)
+                             * sigmoid_derivative(self.output)))
+        d_weightsl = np.dot(self.input.T,
+                            (np.dot(
+                                2 * (self.y - self.output) * sigmoid_derivative(self.output),
+                                self.weights2.T)
+                             * sigmoid_derivative(self.layerl)))
+        # update the weights with the derivative (slope) of the loss function
+        self.weightsl += d_weightsl
+        self.weights2 += d_weights2
+
+
+
+
+
+
+
+
+
 
 
 epochs = 100
@@ -174,56 +172,4 @@ def main():
     ploting()
 
 
-def rfc():
-    g_perfect = []
-    g_res = 0
-    k_fail = 0
-    k = 0
-    g_max = 0
-    for i in range(1, 301):
-        print(f'i: {i}, k: {k}, g_res: {g_res}, g_max: {g_max}')
-        g_res = 0
-        for k in range(1, 501):
-            if k_fail >= 50:
-                k_fail = 0
-                break
-            clf = RandomForestClassifier(n_estimators=i, max_depth=k, random_state=0)
-            clf.fit(tr_data, tr_label)
-            tmp = clf.score(va_data, va_label)
-            if tmp > g_res:
-                k_fail = 0
-                g_res = clf.score(va_data, va_label)
-                if g_res > g_max:
-                    g_max = g_res
-                    g_perfect.append(i)
-                    g_perfect.append(k)
-            else:
-                k_fail += 1
-    return g_perfect[0], g_perfect[1]
-
-
-def main1():
-    load()
-    i, k = rfc()
-    clf = RandomForestClassifier(n_estimators=i, max_depth=k, random_state=0)
-    clf.fit(tr_data, tr_label)
-    print(clf.score(va_data, va_label))
-    print(clf.predict(te_data[0:20]))
-    print(clf.predict(te_data[80:100]))
-
-
-def main2():
-    load()
-    """<=====Need_to_fix=====>"""
-    rf = RandomForestRegressor(n_estimators=10, max_depth=100, random_state=0)
-    clf = BaggingRegressor(rf, n_estimators=60, max_samples=0.1, random_state=25)
-    """<=====================>"""
-    clf.fit(tr_data, tr_label)
-    print(clf.score(va_data, va_label))
-    print(clf.predict(te_data[0:20]))
-    print(clf.predict(te_data[80:100]))
-
-
-# main()
-main1()
-# main2()
+main()

@@ -16,9 +16,7 @@ class Neuro():
         return model
 
 
-
 def press(x, y, x1, y1):
-
     pyautogui.press('down')
 
 
