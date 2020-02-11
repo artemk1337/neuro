@@ -45,7 +45,9 @@ class NeuralNetwork:
         self.weights2 += d_weights2
 
 
-
-
+if __name__ == '__main__':
+    x = np.random.uniform(-1, 1, (3, 3))
+    print(x)
+    print(relu(x))
 
 
