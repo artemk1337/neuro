@@ -277,16 +277,6 @@ def get_results_by_date(start_date, end_date):
 
     return results_list
 
-
-# In progress
-def get_analitics(matchurl):
-    page = get_parsed_page(matchurl)
-    pass
-
-
-print(get_analitics("https://www.hltv.org/betting/analytics/2338956/renegades-vs-order-iem-katowice-2020-oceania-closed-qualifier"))
-
-
 if __name__ == "__main__":
     import pprint
     pp = pprint.PrettyPrinter()
