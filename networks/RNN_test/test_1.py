@@ -24,10 +24,16 @@ print('input_train shape:', input_train.shape)
 print('input_test shape:', input_test.shape)
 
 
+
+
+
+
 model = Sequential()
 model.add(Embedding(max_features, 32))
 model.add(LSTM(32))
 model.add(Dense(1, activation='sigmoid'))
+print(model.summary())
+exit()
 model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc'])
 history = model.fit(input_train, y_train,
                     epochs=10,
