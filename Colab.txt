@@ -1,4 +1,3 @@
+!pip install -U -q PyDrive
 from google.colab import drive
-drive.mount('content/drive')
-
-cd drive/'My Drive'/'Colab Notebooks'/bons
+drive.mount('/content/drive')
